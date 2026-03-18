@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -275,13 +275,18 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">هل البناية موضوع رهن إشارة التعاون الوطني من طرف INDH</label>
-                <Input
-                  value={formData.indhMortgage}
-                  onChange={(e) => setFormData(prev => ({ ...prev, indhMortgage: e.target.value }))}
-                  placeholder="أدخل المعلومات"
-                  className="text-right"
-                  dir="rtl"
-                />
+                <Select 
+                  value={formData.indhMortgage} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, indhMortgage: v }))}
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="اختر" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="نعم">نعم</SelectItem>
+                    <SelectItem value="لا">لا</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="space-y-2 text-right">
@@ -303,7 +308,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.centerManagement} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
                 >
-                  <SelectTrigger className="text-right" dir="rtl">
+                  <SelectTrigger className="w-full text-right" dir="rtl">
                     <SelectValue placeholder="اختر نوع التدبير" />
                   </SelectTrigger>
                   <SelectContent>
@@ -320,7 +325,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.legalStatus} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
                 >
-                  <SelectTrigger className="text-right" dir="rtl">
+                  <SelectTrigger className="w-full text-right" dir="rtl">
                     <SelectValue placeholder="اختر الوضعية القانونية" />
                   </SelectTrigger>
                   <SelectContent>
@@ -429,7 +434,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.currentStatus} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, currentStatus: v }))}
                 >
-                  <SelectTrigger className="text-right" dir="rtl">
+                  <SelectTrigger className="w-full text-right" dir="rtl">
                     <SelectValue placeholder="اختر الوضعية الحالية" />
                   </SelectTrigger>
                   <SelectContent>
@@ -465,7 +470,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.generalCondition} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, generalCondition: v }))}
                 >
-                  <SelectTrigger className="text-right" dir="rtl">
+                  <SelectTrigger className="w-full text-right" dir="rtl">
                     <SelectValue placeholder="اختر الحالة العامة" />
                   </SelectTrigger>
                   <SelectContent>
