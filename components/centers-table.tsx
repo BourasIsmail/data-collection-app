@@ -290,34 +290,34 @@ export function CentersTable() {
             <>
               <div className="rounded-lg border border-border/50 overflow-hidden">
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table dir="rtl">
                     <TableHeader>
                       <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                        <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[180px]">اسم البناية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[120px]">الإقليم</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[150px]">الجماعة الترابية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[120px]">الوضعية الحالية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[120px]">الحالة العامة</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground w-[100px]">الإجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedCenters.map((center) => (
                         <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-2">
-                              <Building className="h-4 w-4 text-muted-foreground" />
+                          <TableCell className="font-medium text-right">
+                            <div className="flex items-center gap-2 justify-end">
                               {center.centerName}
+                              <Building className="h-4 w-4 text-muted-foreground" />
                             </div>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <MapPin className="h-3.5 w-3.5" />
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-1.5 text-muted-foreground justify-end">
                               {center.province || "-"}
+                              <MapPin className="h-3.5 w-3.5" />
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{center.territorialCommunity || "-"}</TableCell>
-                          <TableCell>
+                          <TableCell className="text-muted-foreground text-right">{center.territorialCommunity || "-"}</TableCell>
+                          <TableCell className="text-right">
                             {center.currentStatus && (
                               <Badge 
                                 variant="outline"
@@ -333,7 +333,7 @@ export function CentersTable() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-right">
                             {center.generalCondition && (
                               <Badge 
                                 variant="outline"
@@ -349,8 +349,8 @@ export function CentersTable() {
                               </Badge>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-1">
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-1 justify-end">
                               <Button
                                 variant="ghost"
                                 size="icon"
