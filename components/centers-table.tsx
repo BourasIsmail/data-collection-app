@@ -245,21 +245,30 @@ export function CentersTable() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DetailItem label="الجهة" value={selectedCenter.region} />
                   <DetailItem label="الإقليم" value={selectedCenter.province} />
-                  <DetailItem label="اسم المركز" value={selectedCenter.centerName} />
-                  <DetailItem label="البرنامج" value={selectedCenter.program} />
+                  <DetailItem label="الدائرة/القيادة" value={selectedCenter.circle} />
+                  <DetailItem label="الجماعة الترابية أو المقاطعة" value={selectedCenter.territorialCommunity} />
+                  <DetailItem label="اسم المنشأة أو المركز" value={selectedCenter.centerName} />
+                  <DetailItem label="البرنامج الذي أحدثت في إطاره المنشأة" value={selectedCenter.program} />
                   <DetailItem label="رقم الرخصة" value={selectedCenter.licenseNumber} />
-                  <DetailItem label="الوسط" value={selectedCenter.environment} />
-                  <DetailItem label="العنوان" value={selectedCenter.address} className="md:col-span-2" />
                 </div>
               </div>
 
-              {/* معلومات الاتصال */}
+              {/* العنوان ومعلومات الاتصال */}
               <div>
-                <h4 className="font-semibold mb-3 border-b pb-2">معلومات الاتصال</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <DetailItem label="الهاتف" value={selectedCenter.phone} />
+                <h4 className="font-semibold mb-3 border-b pb-2">العنوان ومعلومات الاتصال</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DetailItem label="العنوان" value={selectedCenter.address} className="md:col-span-2" />
+                  <DetailItem label="رقم الهاتف" value={selectedCenter.phone} />
                   <DetailItem label="البريد الإلكتروني" value={selectedCenter.email} />
                   <DetailItem label="الإحداثيات الجغرافية" value={selectedCenter.coordinates} />
+                </div>
+              </div>
+
+              {/* الوسط */}
+              <div>
+                <h4 className="font-semibold mb-3 border-b pb-2">الوسط</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <DetailItem label="الوسط" value={selectedCenter.environment} />
                 </div>
               </div>
 
@@ -279,8 +288,8 @@ export function CentersTable() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <DetailItem label="الحالة البنيوية" value={selectedCenter.structuralCondition} />
                   <DetailItem label="عدد الطوابق" value={selectedCenter.numberOfFloors} />
-                  <DetailItem label="مساحة البناء" value={selectedCenter.buildingArea ? `${selectedCenter.buildingArea} م²` : ""} />
-                  <DetailItem label="مساحة الأرض" value={selectedCenter.landArea ? `${selectedCenter.landArea} م²` : ""} />
+                  <DetailItem label="المساحة المبنية" value={selectedCenter.buildingArea ? `${selectedCenter.buildingArea} م²` : ""} />
+                  <DetailItem label="المساحة الإجمالية للأرض" value={selectedCenter.landArea ? `${selectedCenter.landArea} م²` : ""} />
                   <DetailItem label="عدد المرافق" value={selectedCenter.numberOfFacilities} />
                 </div>
               </div>
@@ -288,11 +297,11 @@ export function CentersTable() {
               {/* الربط بالشبكات */}
               <div>
                 <h4 className="font-semibold mb-3 border-b pb-2">الربط بالشبكات</h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <DetailItem label="شبكة الماء" value={selectedCenter.waterConnection ? "نعم" : "لا"} />
-                  <DetailItem label="شبكة الكهرباء" value={selectedCenter.electricityConnection ? "نعم" : "لا"} />
-                  <DetailItem label="شبكة التطهير" value={selectedCenter.sanitationConnection ? "نعم" : "لا"} />
-                  <DetailItem label="ولوجية ذوي الاحتياجات" value={selectedCenter.accessibilityForDisabled ? "نعم" : "لا"} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DetailItem label="هل المنشأة مربوطة بشبكة الماء الصالح للشرب" value={selectedCenter.waterConnection ? "نعم" : "لا"} />
+                  <DetailItem label="هل المنشأة مربوطة بشبكة الكهرباء" value={selectedCenter.electricityConnection ? "نعم" : "لا"} />
+                  <DetailItem label="هل المنشأة مربوطة بشبكة التطهير" value={selectedCenter.sanitationConnection ? "نعم" : "لا"} />
+                  <DetailItem label="هل للمنشأة ولوجية لذوي الاحتياجات الخاصة" value={selectedCenter.accessibilityForDisabled ? "نعم" : "لا"} />
                 </div>
               </div>
 
@@ -300,8 +309,8 @@ export function CentersTable() {
               <div>
                 <h4 className="font-semibold mb-3 border-b pb-2">الشراكات</h4>
                 <div className="grid grid-cols-1 gap-4">
-                  <DetailItem label="موضوع الشراكة مع INDH" value={selectedCenter.indhPartnership} />
-                  <DetailItem label="موضوع رهن التعاون الوطني" value={selectedCenter.nationalCooperationMortgage} />
+                  <DetailItem label="موضوع الشراكة مع INDH (المبادرة الوطنية للتنمية البشرية)" value={selectedCenter.indhPartnership} />
+                  <DetailItem label="موضوع رهن إشارة التعاون الوطني" value={selectedCenter.nationalCooperationMortgage} />
                 </div>
               </div>
 
@@ -309,18 +318,17 @@ export function CentersTable() {
               <div>
                 <h4 className="font-semibold mb-3 border-b pb-2">الخدمات والموارد</h4>
                 <div className="grid grid-cols-1 gap-4">
-                  <DetailItem label="الخدمات المقدمة" value={selectedCenter.servicesProvided} />
+                  <DetailItem label="الخدمات المقدمة حسب الفئات المستهدفة" value={selectedCenter.servicesProvided} />
                   <DetailItem label="التجهيزات والمعدات" value={selectedCenter.equipmentAndSupplies} />
                   <DetailItem label="الموارد البشرية وأعدادها" value={selectedCenter.humanResources} />
                 </div>
               </div>
 
-              {/* ملاحظات */}
+              {/* الإشكاليات */}
               <div>
-                <h4 className="font-semibold mb-3 border-b pb-2">ملاحظات</h4>
+                <h4 className="font-semibold mb-3 border-b pb-2">الإشكاليات</h4>
                 <div className="grid grid-cols-1 gap-4">
                   <DetailItem label="الإشكاليات المطروحة في تدبير المنشأة" value={selectedCenter.managementIssues} />
-                  <DetailItem label="ملاحظات أخرى" value={selectedCenter.notes} />
                 </div>
               </div>
             </div>

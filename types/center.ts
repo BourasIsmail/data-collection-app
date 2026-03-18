@@ -1,52 +1,58 @@
+import { Timestamp } from "firebase/firestore";
+
 export interface Center {
   id?: string;
-  // معلومات أساسية - Basic Information
+  
+  // المعلومات الأساسية
   region: string; // الجهة
   province: string; // الإقليم
-  centerName: string; // اسم المركز
-  program: string; // البرنامج
+  circle: string; // الدائرة/القيادة
+  territorialCommunity: string; // الجماعة الترابية أو المقاطعة
+  centerName: string; // اسم المنشأة أو المركز
+  program: string; // البرنامج الذي أحدثت في إطاره المنشأة
   licenseNumber: string; // رقم الرخصة
-  environment: string; // الوسط (حضري/قروي)
-  address: string; // العنوان
   
-  // معلومات الاتصال - Contact Information
-  phone: string; // الهاتف
+  // العنوان ومعلومات الاتصال
+  address: string; // العنوان
+  phone: string; // رقم الهاتف
   email: string; // البريد الإلكتروني
   coordinates: string; // الإحداثيات الجغرافية
   
-  // الملكية والاستغلال - Ownership & Exploitation
+  // الوسط
+  environment: string; // الوسط (حضري/قروي/شبه حضري)
+  
+  // الملكية والاستغلال
   propertyOwnership: string; // الملكية العقارية
   tenant: string; // مكتري
-  exploitationStatus: string; // حالة الاستغلال (مستغل/غير مستغل/في طور الإنجاز)
+  exploitationStatus: string; // حالة الاستغلال (مستغلة/مغلقة/في طور الإنجاز)
   
-  // الحالة البنيوية - Structural Condition
-  structuralCondition: string; // الحالة البنيوية (جيدة/متوسطة/رديئة)
+  // الحالة البنيوية
+  structuralCondition: string; // الحالة البنيوية (جيدة/متوسطة/متردية)
   numberOfFloors: string; // عدد الطوابق
-  buildingArea: string; // مساحة البناء
-  landArea: string; // مساحة الأرض
+  buildingArea: string; // المساحة المبنية م²
+  landArea: string; // المساحة الإجمالية للأرض م²
   numberOfFacilities: string; // عدد المرافق
   
-  // الربط بالشبكات - Network Connections
-  waterConnection: boolean; // الربط بشبكة الماء
-  electricityConnection: boolean; // الربط بشبكة الكهرباء
-  sanitationConnection: boolean; // الربط بشبكة التطهير
-  accessibilityForDisabled: boolean; // الولوجية لذوي الاحتياجات الخاصة
+  // الربط بالشبكات
+  waterConnection: boolean; // هل المنشأة مربوطة بشبكة الماء الصالح للشرب
+  electricityConnection: boolean; // هل المنشأة مربوطة بشبكة الكهرباء
+  sanitationConnection: boolean; // هل المنشأة مربوطة بشبكة التطهير
+  accessibilityForDisabled: boolean; // هل للمنشأة ولوجية لذوي الاحتياجات الخاصة
   
-  // الشراكات - Partnerships
-  indhPartnership: string; // موضوع الشراكة مع INDH
-  nationalCooperationMortgage: string; // موضوع رهن التعاون الوطني
+  // الشراكات
+  indhPartnership: string; // موضوع الشراكة مع INDH المبادرة الوطنية للتنمية البشرية
+  nationalCooperationMortgage: string; // موضوع رهن إشارة التعاون الوطني
   
-  // الخدمات والموارد - Services & Resources
-  servicesProvided: string; // الخدمات المقدمة
+  // الخدمات والموارد
+  servicesProvided: string; // الخدمات المقدمة حسب الفئات المستهدفة
   equipmentAndSupplies: string; // التجهيزات والمعدات
   humanResources: string; // الموارد البشرية وأعدادها
   
-  // ملاحظات - Notes
+  // الإشكاليات
   managementIssues: string; // الإشكاليات المطروحة في تدبير المنشأة
-  notes: string; // ملاحظات
   
   // Metadata
-  createdAt: Date;
-  createdBy: string;
-  updatedAt?: Date;
+  createdAt?: Timestamp;
+  updatedAt?: Timestamp;
+  createdBy?: string;
 }

@@ -24,6 +24,8 @@ interface CenterFormProps {
 const initialFormData = {
   region: "",
   province: "",
+  circle: "",
+  territorialCommunity: "",
   centerName: "",
   program: "",
   licenseNumber: "",
@@ -49,8 +51,7 @@ const initialFormData = {
   servicesProvided: "",
   equipmentAndSupplies: "",
   humanResources: "",
-  managementIssues: "",
-  notes: ""
+  managementIssues: ""
 };
 
 export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
@@ -68,6 +69,8 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
       setFormData({
         region: editCenter.region || "",
         province: editCenter.province || "",
+        circle: editCenter.circle || "",
+        territorialCommunity: editCenter.territorialCommunity || "",
         centerName: editCenter.centerName || "",
         program: editCenter.program || "",
         licenseNumber: editCenter.licenseNumber || "",
@@ -93,8 +96,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
         servicesProvided: editCenter.servicesProvided || "",
         equipmentAndSupplies: editCenter.equipmentAndSupplies || "",
         humanResources: editCenter.humanResources || "",
-        managementIssues: editCenter.managementIssues || "",
-        notes: editCenter.notes || ""
+        managementIssues: editCenter.managementIssues || ""
       });
       setAvailableProvinces(getProvincesByRegion(editCenter.region));
       setFormInitialized(true);
@@ -182,9 +184,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{editCenter ? "تعديل بيانات المركز" : "إضافة مركز جديد"}</CardTitle>
+        <CardTitle>{editCenter ? "تعديل بيانات المنشأة" : "إضافة منشأة جديدة"}</CardTitle>
         <CardDescription>
-          {editCenter ? "قم بتعديل بيانات المركز" : "قم بملء جميع الحقول المطلوبة"}
+          {editCenter ? "قم بتعديل بيانات المنشأة" : "قم بملء جميع الحقول المطلوبة"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -235,19 +237,39 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 </Field>
               </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field>
+                  <FieldLabel>الدائرة/القيادة</FieldLabel>
+                  <Input
+                    value={formData.circle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, circle: e.target.value }))}
+                    placeholder="أدخل الدائرة أو القيادة"
+                  />
+                </Field>
+
+                <Field>
+                  <FieldLabel>الجماعة الترابية أو المقاطعة</FieldLabel>
+                  <Input
+                    value={formData.territorialCommunity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, territorialCommunity: e.target.value }))}
+                    placeholder="أدخل الجماعة الترابية أو المقاطعة"
+                  />
+                </Field>
+              </div>
+
               <Field>
-                <FieldLabel>اسم المركز</FieldLabel>
+                <FieldLabel>اسم المنشأة أو المركز</FieldLabel>
                 <Input
                   value={formData.centerName}
                   onChange={(e) => setFormData(prev => ({ ...prev, centerName: e.target.value }))}
-                  placeholder="أدخل اسم المركز"
+                  placeholder="أدخل اسم المنشأة أو المركز"
                   required
                 />
               </Field>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field>
-                  <FieldLabel>البرنامج</FieldLabel>
+                  <FieldLabel>البرنامج الذي أحدثت في إطاره المنشأة</FieldLabel>
                   <Input
                     value={formData.program}
                     onChange={(e) => setFormData(prev => ({ ...prev, program: e.target.value }))}
@@ -265,43 +287,25 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   />
                 </Field>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field>
-                  <FieldLabel>الوسط</FieldLabel>
-                  <Select 
-                    value={formData.environment} 
-                    onValueChange={(v) => setFormData(prev => ({ ...prev, environment: v }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="اختر الوسط" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="حضري">حضري</SelectItem>
-                      <SelectItem value="قروي">قروي</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </Field>
-
-                <Field>
-                  <FieldLabel>العنوان</FieldLabel>
-                  <Input
-                    value={formData.address}
-                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-                    placeholder="أدخل العنوان"
-                  />
-                </Field>
-              </div>
             </FieldGroup>
           </div>
 
-          {/* القسم الثاني: معلومات الاتصال */}
+          {/* القسم الثاني: العنوان ومعلومات الاتصال */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">معلومات الاتصال</h3>
+            <h3 className="text-lg font-semibold border-b pb-2">العنوان ومعلومات الاتصال</h3>
             <FieldGroup>
+              <Field>
+                <FieldLabel>العنوان</FieldLabel>
+                <Input
+                  value={formData.address}
+                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="أدخل العنوان"
+                />
+              </Field>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Field>
-                  <FieldLabel>الهاتف</FieldLabel>
+                  <FieldLabel>رقم الهاتف</FieldLabel>
                   <Input
                     value={formData.phone}
                     onChange={(e) => setFormData(prev => ({ ...prev, phone: e.target.value }))}
@@ -334,7 +338,30 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </FieldGroup>
           </div>
 
-          {/* القسم الثالث: الملكية والاستغلال */}
+          {/* القسم الثالث: الوسط */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2">الوسط</h3>
+            <FieldGroup>
+              <Field>
+                <FieldLabel>الوسط</FieldLabel>
+                <Select 
+                  value={formData.environment} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, environment: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="اختر الوسط" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="حضري">حضري</SelectItem>
+                    <SelectItem value="قروي">قروي</SelectItem>
+                    <SelectItem value="شبه حضري">شبه حضري</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </FieldGroup>
+          </div>
+
+          {/* القسم الرابع: الملكية والاستغلال */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">الملكية والاستغلال</h3>
             <FieldGroup>
@@ -368,8 +395,8 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                     <SelectValue placeholder="اختر حالة الاستغلال" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="مستغل">مستغل</SelectItem>
-                    <SelectItem value="غير مستغل">غير مستغل</SelectItem>
+                    <SelectItem value="مستغلة">مستغلة</SelectItem>
+                    <SelectItem value="مغلقة">مغلقة</SelectItem>
                     <SelectItem value="في طور الإنجاز">في طور الإنجاز</SelectItem>
                   </SelectContent>
                 </Select>
@@ -377,7 +404,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </FieldGroup>
           </div>
 
-          {/* القسم الرابع: الحالة البنيوية */}
+          {/* القسم الخامس: الحالة البنيوية */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">الحالة البنيوية</h3>
             <FieldGroup>
@@ -394,7 +421,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                     <SelectContent>
                       <SelectItem value="جيدة">جيدة</SelectItem>
                       <SelectItem value="متوسطة">متوسطة</SelectItem>
-                      <SelectItem value="رديئة">رديئة</SelectItem>
+                      <SelectItem value="متردية">متردية</SelectItem>
                     </SelectContent>
                   </Select>
                 </Field>
@@ -412,21 +439,21 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Field>
-                  <FieldLabel>مساحة البناء (م²)</FieldLabel>
+                  <FieldLabel>المساحة المبنية (م²)</FieldLabel>
                   <Input
                     value={formData.buildingArea}
                     onChange={(e) => setFormData(prev => ({ ...prev, buildingArea: e.target.value }))}
-                    placeholder="أدخل مساحة البناء"
+                    placeholder="أدخل المساحة المبنية"
                     dir="ltr"
                   />
                 </Field>
 
                 <Field>
-                  <FieldLabel>مساحة الأرض (م²)</FieldLabel>
+                  <FieldLabel>المساحة الإجمالية للأرض (م²)</FieldLabel>
                   <Input
                     value={formData.landArea}
                     onChange={(e) => setFormData(prev => ({ ...prev, landArea: e.target.value }))}
-                    placeholder="أدخل مساحة الأرض"
+                    placeholder="أدخل المساحة الإجمالية"
                     dir="ltr"
                   />
                 </Field>
@@ -444,17 +471,19 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </FieldGroup>
           </div>
 
-          {/* القسم الخامس: الربط بالشبكات */}
+          {/* القسم السادس: الربط بالشبكات */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">الربط بالشبكات</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center gap-2">
                 <Checkbox
                   id="waterConnection"
                   checked={formData.waterConnection}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, waterConnection: checked as boolean }))}
                 />
-                <label htmlFor="waterConnection" className="text-sm cursor-pointer">شبكة الماء</label>
+                <label htmlFor="waterConnection" className="text-sm cursor-pointer">
+                  هل المنشأة مربوطة بشبكة الماء الصالح للشرب؟
+                </label>
               </div>
 
               <div className="flex items-center gap-2">
@@ -463,7 +492,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   checked={formData.electricityConnection}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, electricityConnection: checked as boolean }))}
                 />
-                <label htmlFor="electricityConnection" className="text-sm cursor-pointer">شبكة الكهرباء</label>
+                <label htmlFor="electricityConnection" className="text-sm cursor-pointer">
+                  هل المنشأة مربوطة بشبكة الكهرباء؟
+                </label>
               </div>
 
               <div className="flex items-center gap-2">
@@ -472,7 +503,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   checked={formData.sanitationConnection}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, sanitationConnection: checked as boolean }))}
                 />
-                <label htmlFor="sanitationConnection" className="text-sm cursor-pointer">شبكة التطهير</label>
+                <label htmlFor="sanitationConnection" className="text-sm cursor-pointer">
+                  هل المنشأة مربوطة بشبكة التطهير؟
+                </label>
               </div>
 
               <div className="flex items-center gap-2">
@@ -481,17 +514,19 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   checked={formData.accessibilityForDisabled}
                   onCheckedChange={(checked) => setFormData(prev => ({ ...prev, accessibilityForDisabled: checked as boolean }))}
                 />
-                <label htmlFor="accessibilityForDisabled" className="text-sm cursor-pointer">ولوجية ذوي الاحتياجات</label>
+                <label htmlFor="accessibilityForDisabled" className="text-sm cursor-pointer">
+                  هل للمنشأة ولوجية لذوي الاحتياجات الخاصة؟
+                </label>
               </div>
             </div>
           </div>
 
-          {/* القسم السادس: الشراكات */}
+          {/* القسم السابع: الشراكات */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">الشراكات</h3>
             <FieldGroup>
               <Field>
-                <FieldLabel>موضوع الشراكة مع INDH</FieldLabel>
+                <FieldLabel>موضوع الشراكة مع INDH (المبادرة الوطنية للتنمية البشرية)</FieldLabel>
                 <Textarea
                   value={formData.indhPartnership}
                   onChange={(e) => setFormData(prev => ({ ...prev, indhPartnership: e.target.value }))}
@@ -501,28 +536,28 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               </Field>
 
               <Field>
-                <FieldLabel>موضوع رهن التعاون الوطني</FieldLabel>
+                <FieldLabel>موضوع رهن إشارة التعاون الوطني</FieldLabel>
                 <Textarea
                   value={formData.nationalCooperationMortgage}
                   onChange={(e) => setFormData(prev => ({ ...prev, nationalCooperationMortgage: e.target.value }))}
-                  placeholder="أدخل موضوع رهن التعاون الوطني"
+                  placeholder="أدخل موضوع رهن إشارة التعاون الوطني"
                   rows={2}
                 />
               </Field>
             </FieldGroup>
           </div>
 
-          {/* القسم السابع: الخدمات والموارد */}
+          {/* القسم الثامن: الخدمات والموارد */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold border-b pb-2">الخدمات والموارد</h3>
             <FieldGroup>
               <Field>
-                <FieldLabel>الخدمات المقدمة</FieldLabel>
+                <FieldLabel>الخدمات المقدمة حسب الفئات المستهدفة</FieldLabel>
                 <Textarea
                   value={formData.servicesProvided}
                   onChange={(e) => setFormData(prev => ({ ...prev, servicesProvided: e.target.value }))}
                   placeholder="أدخل الخدمات المقدمة"
-                  rows={2}
+                  rows={3}
                 />
               </Field>
 
@@ -532,7 +567,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.equipmentAndSupplies}
                   onChange={(e) => setFormData(prev => ({ ...prev, equipmentAndSupplies: e.target.value }))}
                   placeholder="أدخل التجهيزات والمعدات"
-                  rows={2}
+                  rows={3}
                 />
               </Field>
 
@@ -542,15 +577,15 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.humanResources}
                   onChange={(e) => setFormData(prev => ({ ...prev, humanResources: e.target.value }))}
                   placeholder="أدخل الموارد البشرية وأعدادها"
-                  rows={2}
+                  rows={3}
                 />
               </Field>
             </FieldGroup>
           </div>
 
-          {/* القسم الثامن: ملاحظات */}
+          {/* القسم التاسع: الإشكاليات */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2">ملاحظات</h3>
+            <h3 className="text-lg font-semibold border-b pb-2">الإشكاليات</h3>
             <FieldGroup>
               <Field>
                 <FieldLabel>الإشكاليات المطروحة في تدبير المنشأة</FieldLabel>
@@ -558,32 +593,24 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   value={formData.managementIssues}
                   onChange={(e) => setFormData(prev => ({ ...prev, managementIssues: e.target.value }))}
                   placeholder="أدخل الإشكاليات المطروحة"
-                  rows={2}
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel>ملاحظات أخرى</FieldLabel>
-                <Textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
-                  placeholder="أدخل أي ملاحظات إضافية"
-                  rows={2}
+                  rows={4}
                 />
               </Field>
             </FieldGroup>
           </div>
 
-          {success && (
-            <div className="flex items-center gap-2 text-green-600 text-sm p-3 bg-green-50 rounded-lg">
-              <CheckCircle className="h-4 w-4" />
-              <span>{editCenter ? "تم تحديث البيانات بنجاح" : "تم حفظ البيانات بنجاح"}</span>
-            </div>
-          )}
-
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? <Spinner className="h-4 w-4" /> : (editCenter ? "تحديث البيانات" : "حفظ البيانات")}
-          </Button>
+          {/* زر الحفظ */}
+          <div className="flex items-center gap-4">
+            <Button type="submit" disabled={loading} className="min-w-[120px]">
+              {loading ? <Spinner className="h-4 w-4" /> : editCenter ? "حفظ التعديلات" : "إضافة المنشأة"}
+            </Button>
+            {success && (
+              <div className="flex items-center gap-2 text-green-600">
+                <CheckCircle className="h-5 w-5" />
+                <span>تم الحفظ بنجاح</span>
+              </div>
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>
