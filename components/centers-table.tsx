@@ -118,11 +118,23 @@ export function CentersTable() {
   };
 
   const handleExportCSV = () => {
-    exportToCSV(filteredCenters, `centers-export-${new Date().toISOString().split('T')[0]}`);
+    const dataToExport = filteredCenters.length > 0 ? filteredCenters : centers;
+    console.log("[v0] Exporting CSV - filteredCenters:", filteredCenters.length, "centers:", centers.length, "dataToExport:", dataToExport.length);
+    if (dataToExport.length === 0) {
+      alert("لا توجد بيانات للتصدير");
+      return;
+    }
+    exportToCSV(dataToExport, `centers-data-${new Date().toISOString().split('T')[0]}`);
   };
 
   const handleExportExcel = () => {
-    exportToExcel(filteredCenters, `centers-export-${new Date().toISOString().split('T')[0]}`);
+    const dataToExport = filteredCenters.length > 0 ? filteredCenters : centers;
+    console.log("[v0] Exporting Excel - filteredCenters:", filteredCenters.length, "centers:", centers.length, "dataToExport:", dataToExport.length);
+    if (dataToExport.length === 0) {
+      alert("لا توجد بيانات للتصدير");
+      return;
+    }
+    exportToExcel(dataToExport, `centers-data-${new Date().toISOString().split('T')[0]}`);
   };
 
   const clearFilters = () => {
