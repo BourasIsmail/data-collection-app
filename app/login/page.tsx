@@ -50,7 +50,6 @@ export default function LoginPage() {
             <Building2 className="h-8 w-8 text-primary" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">نظام إدارة المراكز</h1>
-          <p className="text-muted-foreground mt-2">المملكة المغربية</p>
         </div>
 
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl">
