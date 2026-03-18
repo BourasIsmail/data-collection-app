@@ -89,7 +89,8 @@ export function exportToCSV(centers: Center[], filename: string = "centers-data"
   document.body.removeChild(link);
 }
 
-// Convert centers data to Excel XML format for proper column separation
+// Convert centers data to Excel format (semicolon-separated CSV with .xlsx extension)
+// Using semicolon as delimiter since Arabic content may contain commas
 export function exportToExcel(centers: Center[], filename: string = "centers-data") {
   const headers = [
     "اسم المنشأة",
@@ -159,51 +160,32 @@ export function exportToExcel(centers: Center[], filename: string = "centers-dat
     center.observations || ""
   ]);
 
-  // Escape XML special characters
-  const escapeXml = (str: string) => {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&apos;');
+  // Escape and quote cells for proper CSV handling
+  const escapeCell = (cell: string) => {
+    const str = String(cell);
+    // If cell contains semicolon, newline, or quotes, wrap in quotes and escape internal quotes
+    if (str.includes(';') || str.includes('\n') || str.includes('"')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
   };
 
-  // Create Excel XML format
-  const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
-  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-  <Styles>
-    <Style ss:ID="Header">
-      <Font ss:Bold="1"/>
-      <Alignment ss:Horizontal="Right"/>
-      <Interior ss:Color="#E0E0E0" ss:Pattern="Solid"/>
-    </Style>
-    <Style ss:ID="Data">
-      <Alignment ss:Horizontal="Right"/>
-    </Style>
-  </Styles>
-  <Worksheet ss:Name="البنايات">
-    <Table ss:DefaultColumnWidth="100" ss:RightToLeft="1">
-      <Row>
-        ${headers.map(h => `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('\n        ')}
-      </Row>
-      ${rows.map(row => `<Row>
-        ${row.map(cell => `<Cell ss:StyleID="Data"><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join('\n        ')}
-      </Row>`).join('\n      ')}
-    </Table>
-  </Worksheet>
-</Workbook>`;
+  // Use BOM for UTF-8 and semicolon as delimiter (common in European/Arabic Excel)
+  const BOM = "\uFEFF";
+  const csvContent = BOM + [
+    headers.map(escapeCell).join(';'),
+    ...rows.map(row => row.map(escapeCell).join(';'))
+  ].join('\r\n');
 
-  const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8;" });
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
   
   link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}.xls`);
+  link.setAttribute("download", `${filename}.csv`);
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }

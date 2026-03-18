@@ -10,12 +10,10 @@ import { UserManagement } from "@/components/user-management";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { LogOut, Building2, Plus, LayoutList, Shield, MapPin, AlertTriangle, Users, Download, FileSpreadsheet } from "lucide-react";
+import { LogOut, Building2, Plus, LayoutList, Shield, MapPin, AlertTriangle, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { exportToCSV, exportToExcel } from "@/lib/export-utils";
 import { Center } from "@/types/center";
 
 export default function DashboardPage() {
@@ -51,16 +49,6 @@ export default function DashboardPage() {
   const handleSignOut = async () => {
     await signOut();
     router.push("/login");
-  };
-
-  const handleExportCSV = () => {
-    const date = new Date().toISOString().split('T')[0];
-    exportToCSV(centers, `centers-data-${date}`);
-  };
-
-  const handleExportExcel = () => {
-    const date = new Date().toISOString().split('T')[0];
-    exportToExcel(centers, `centers-data-${date}`);
   };
 
   if (loading) {
@@ -140,28 +128,6 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center gap-3">
-              {/* Export Button - Admin Only */}
-              {isAdmin && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="hidden sm:flex">
-                      <Download className="h-4 w-4 ml-2" />
-                      تصدير البيانات
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={handleExportCSV}>
-                      <FileSpreadsheet className="h-4 w-4 ml-2" />
-                      تصدير CSV
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleExportExcel}>
-                      <FileSpreadsheet className="h-4 w-4 ml-2" />
-                      تصدير Excel
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-              
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-foreground">{userData.displayName}</p>
                 <p className="text-xs text-muted-foreground">{userData.email}</p>
