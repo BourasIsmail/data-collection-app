@@ -21,6 +21,10 @@ export function StatsCards() {
       })) as Center[];
       setCenters(centersData);
       setLoading(false);
+    }, (error) => {
+      // Silently handle permission errors
+      console.warn("Stats fetch error (expected if Firestore not configured):", error.code);
+      setLoading(false);
     });
 
     return () => unsubscribe();
