@@ -1,0 +1,295 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { Center } from "@/types/center";
+import { useAuth } from "@/contexts/auth-context";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import { CenterForm } from "./center-form";
+import { regions } from "@/lib/morocco-data";
+import { Search, Trash2, Edit, Eye, X } from "lucide-react";
+
+export function CentersTable() {
+  const { userData } = useAuth();
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterRegion, setFilterRegion] = useState<string>("all");
+  const [filterProvince, setFilterProvince] = useState<string>("all");
+  const [selectedCenter, setSelectedCenter] = useState<Center | null>(null);
+  const [editingCenter, setEditingCenter] = useState<Center | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<Center | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!userData) return;
+
+    let q;
+    if (userData.role === "admin") {
+      q = query(collection(db, "centers"), orderBy("createdAt", "desc"));
+    } else {
+      q = query(
+        collection(db, "centers"),
+        where("province", "==", userData.province),
+        orderBy("createdAt", "desc")
+      );
+    }
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const centersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Center[];
+      setCenters(centersData);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [userData]);
+
+  const filteredCenters = centers.filter(center => {
+    const matchesSearch = 
+      center.centerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      center.licenseNumber.includes(searchTerm) ||
+      center.program.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRegion = filterRegion === "all" || center.region === filterRegion;
+    const matchesProvince = filterProvince === "all" || center.province === filterProvince;
+    
+    return matchesSearch && matchesRegion && matchesProvince;
+  });
+
+  const handleDelete = async () => {
+    if (!deleteConfirm?.id) return;
+    setDeleting(true);
+    try {
+      await deleteDoc(doc(db, "centers", deleteConfirm.id));
+      setDeleteConfirm(null);
+    } catch (error) {
+      console.error("Error deleting center:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const availableProvinces = filterRegion !== "all" 
+    ? regions.find(r => r.name === filterRegion)?.provinces || []
+    : [];
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Spinner className="h-8 w-8" />
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>قائمة المراكز</CardTitle>
+          <CardDescription>
+            {userData?.role === "admin" 
+              ? `جميع المراكز المسجلة (${filteredCenters.length} مركز)`
+              : `المراكز في إقليم ${userData?.province} (${filteredCenters.length} مركز)`
+            }
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="بحث بالاسم أو رقم الرخصة..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pr-10"
+              />
+            </div>
+            
+            {userData?.role === "admin" && (
+              <>
+                <Select value={filterRegion} onValueChange={(v) => {
+                  setFilterRegion(v);
+                  setFilterProvince("all");
+                }}>
+                  <SelectTrigger className="w-full md:w-[200px]">
+                    <SelectValue placeholder="فلترة بالجهة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">جميع الجهات</SelectItem>
+                    {regions.map((region) => (
+                      <SelectItem key={region.name} value={region.name}>
+                        {region.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                
+                {filterRegion !== "all" && (
+                  <Select value={filterProvince} onValueChange={setFilterProvince}>
+                    <SelectTrigger className="w-full md:w-[200px]">
+                      <SelectValue placeholder="فلترة بالإقليم" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">جميع الأقاليم</SelectItem>
+                      {availableProvinces.map((province) => (
+                        <SelectItem key={province} value={province}>
+                          {province}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </>
+            )}
+          </div>
+
+          {filteredCenters.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              لا توجد مراكز مسجلة
+            </div>
+          ) : (
+            <div className="rounded-lg border overflow-hidden">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-right">اسم المركز</TableHead>
+                      <TableHead className="text-right">الإقليم</TableHead>
+                      <TableHead className="text-right">رقم الرخصة</TableHead>
+                      <TableHead className="text-right">البرنامج</TableHead>
+                      <TableHead className="text-right">الوسط</TableHead>
+                      <TableHead className="text-right">الإجراءات</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredCenters.map((center) => (
+                      <TableRow key={center.id}>
+                        <TableCell className="font-medium">{center.centerName}</TableCell>
+                        <TableCell>{center.province}</TableCell>
+                        <TableCell dir="ltr">{center.licenseNumber}</TableCell>
+                        <TableCell>{center.program}</TableCell>
+                        <TableCell>
+                          <Badge variant={center.environment === "حضري" ? "default" : "secondary"}>
+                            {center.environment}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setSelectedCenter(center)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setEditingCenter(center)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {userData?.role === "admin" && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setDeleteConfirm(center)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* View Dialog */}
+      <Dialog open={!!selectedCenter} onOpenChange={() => setSelectedCenter(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تفاصيل المركز</DialogTitle>
+            <DialogDescription>{selectedCenter?.centerName}</DialogDescription>
+          </DialogHeader>
+          {selectedCenter && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <DetailItem label="الجهة" value={selectedCenter.region} />
+              <DetailItem label="الإقليم" value={selectedCenter.province} />
+              <DetailItem label="اسم المركز" value={selectedCenter.centerName} />
+              <DetailItem label="البرنامج" value={selectedCenter.program} />
+              <DetailItem label="رقم الرخصة" value={selectedCenter.licenseNumber} />
+              <DetailItem label="الوسط" value={selectedCenter.environment} />
+              <DetailItem label="العنوان" value={selectedCenter.address} className="md:col-span-2" />
+              <DetailItem label="الملكية العقارية" value={selectedCenter.propertyOwnership} />
+              <DetailItem label="مكتري" value={selectedCenter.tenant} />
+              <DetailItem label="موضوع الشراكة مع INDH" value={selectedCenter.indhPartnership} className="md:col-span-2" />
+              <DetailItem label="موضوع رهن التعاون الوطني" value={selectedCenter.nationalCooperationMortgage} className="md:col-span-2" />
+              <DetailItem label="الخدمات المقدمة" value={selectedCenter.servicesProvided} className="md:col-span-2" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingCenter} onOpenChange={() => setEditingCenter(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تعديل المركز</DialogTitle>
+          </DialogHeader>
+          <CenterForm 
+            editCenter={editingCenter} 
+            onSuccess={() => setEditingCenter(null)} 
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>تأكيد الحذف</DialogTitle>
+            <DialogDescription>
+              هل أنت متأكد من حذف المركز "{deleteConfirm?.centerName}"؟ لا يمكن التراجع عن هذا الإجراء.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+              إلغاء
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+              {deleting ? <Spinner className="h-4 w-4" /> : "حذف"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
+function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+  return (
+    <div className={`space-y-1 ${className}`}>
+      <p className="text-sm font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm">{value || "-"}</p>
+    </div>
+  );
+}
