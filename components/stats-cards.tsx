@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Center } from "@/types/center";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Building2, MapPin, CheckCircle, AlertTriangle } from "lucide-react";
 
 export function StatsCards() {
@@ -40,41 +40,53 @@ export function StatsCards() {
       title: "إجمالي البنايات",
       value: loading ? "-" : totalCenters,
       icon: Building2,
-      description: "بناية مسجلة"
+      description: "بناية مسجلة",
+      color: "text-primary",
+      bgColor: "bg-primary/10"
     },
     {
       title: "الأقاليم المغطاة",
       value: loading ? "-" : uniqueProvinces,
       icon: MapPin,
-      description: "إقليم"
+      description: "إقليم",
+      color: "text-blue-400",
+      bgColor: "bg-blue-500/10"
     },
     {
       title: "البنايات المستغلة",
       value: loading ? "-" : operationalCenters,
       icon: CheckCircle,
-      description: `من ${totalCenters} بناية`
+      description: `من ${totalCenters} بناية`,
+      color: "text-green-400",
+      bgColor: "bg-green-500/10"
     },
     {
       title: "تحتاج تأهيل",
       value: loading ? "-" : needsRehabilitation,
       icon: AlertTriangle,
-      description: "بناية"
+      description: "بناية",
+      color: "text-yellow-400",
+      bgColor: "bg-yellow-500/10"
     }
   ];
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat) => (
-        <Card key={stat.title}>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {stat.title}
-            </CardTitle>
-            <stat.icon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stat.value}</div>
-            <p className="text-xs text-muted-foreground">{stat.description}</p>
+        <Card key={stat.title} className="border-border/50 bg-card/80 hover:bg-card transition-colors">
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">
+                  {stat.title}
+                </p>
+                <p className="text-3xl font-bold text-foreground">{stat.value}</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">{stat.description}</p>
+              </div>
+              <div className={`p-2.5 rounded-lg ${stat.bgColor}`}>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
+            </div>
           </CardContent>
         </Card>
       ))}

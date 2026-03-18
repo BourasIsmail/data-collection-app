@@ -9,7 +9,8 @@ import { StatsCards } from "@/components/stats-cards";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { LogOut, Building2, Plus, LayoutList, Users, Shield } from "lucide-react";
+import { LogOut, Building2, Plus, LayoutList, Shield, MapPin, AlertTriangle } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function DashboardPage() {
   const { user, userData, loading, signOut } = useAuth();
@@ -29,8 +30,11 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Spinner className="h-8 w-8" />
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Spinner className="h-10 w-10 mx-auto text-primary" />
+          <p className="mt-4 text-muted-foreground">جاري التحميل...</p>
+        </div>
       </div>
     );
   }
@@ -42,25 +46,30 @@ export default function DashboardPage() {
   // If userData isn't loaded yet (Firestore not configured), show setup message
   if (!userData) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/50">
-        <div className="bg-background p-8 rounded-lg shadow-lg max-w-md text-center space-y-4">
-          <div className="bg-amber-100 text-amber-800 p-4 rounded-lg">
-            <h2 className="font-bold text-lg mb-2">إعداد قاعدة البيانات مطلوب</h2>
-            <p className="text-sm mb-4">
-              تم تسجيل الدخول بنجاح، لكن يجب إعداد Firestore في وحدة تحكم Firebase.
-            </p>
-            <ol className="text-sm text-right space-y-2 list-decimal list-inside">
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="max-w-md w-full border-border/50">
+          <CardContent className="pt-6">
+            <div className="text-center mb-4">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-warning/10 text-warning mb-4">
+                <AlertTriangle className="h-6 w-6" />
+              </div>
+              <h2 className="font-bold text-lg text-foreground">إعداد قاعدة البيانات مطلوب</h2>
+              <p className="text-sm text-muted-foreground mt-2">
+                تم تسجيل الدخول بنجاح، لكن يجب إعداد Firestore في وحدة تحكم Firebase.
+              </p>
+            </div>
+            <ol className="text-sm text-muted-foreground space-y-2 list-decimal list-inside bg-secondary/50 p-4 rounded-lg mb-4">
               <li>افتح وحدة تحكم Firebase</li>
               <li>اذهب إلى Firestore Database</li>
               <li>أنشئ قاعدة بيانات جديدة</li>
-              <li>في قسم Rules، اختر Test Mode أو أضف قواعد الأمان</li>
+              <li>في قسم Rules، اختر Test Mode</li>
             </ol>
-          </div>
-          <Button variant="outline" onClick={handleSignOut} className="w-full">
-            <LogOut className="h-4 w-4 ml-2" />
-            تسجيل الخروج
-          </Button>
-        </div>
+            <Button variant="outline" onClick={handleSignOut} className="w-full">
+              <LogOut className="h-4 w-4 ml-2" />
+              تسجيل الخروج
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -68,35 +77,46 @@ export default function DashboardPage() {
   const isAdmin = userData.role === "admin";
 
   return (
-    <div className="min-h-screen bg-muted/50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-background border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+      <header className="bg-card border-b border-border/50 sticky top-0 z-10">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-                <Building2 className="h-6 w-6" />
+              <div className="bg-primary/10 border border-primary/20 p-2 rounded-lg">
+                <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-xl font-bold">نظام إدارة المراكز</h1>
-                <p className="text-sm text-muted-foreground">
-                  {isAdmin ? "لوحة تحكم المدير" : `إقليم ${userData.province}`}
-                </p>
+                <h1 className="text-lg font-bold text-foreground">نظام إدارة المراكز</h1>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {isAdmin ? (
+                    <>
+                      <Shield className="h-3 w-3 text-primary" />
+                      <span>مدير النظام</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapPin className="h-3 w-3" />
+                      <span>{userData.province}</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <div className="hidden md:flex items-center gap-2 text-sm">
-                {isAdmin ? (
-                  <Shield className="h-4 w-4 text-primary" />
-                ) : (
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="font-medium">{userData.displayName}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:block text-left">
+                <p className="text-sm font-medium text-foreground">{userData.displayName}</p>
+                <p className="text-xs text-muted-foreground">{userData.email}</p>
               </div>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 ml-2" />
-                خروج
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="text-muted-foreground hover:text-foreground hover:bg-secondary"
+              >
+                <LogOut className="h-4 w-4 ml-1.5" />
+                <span className="hidden sm:inline">خروج</span>
               </Button>
             </div>
           </div>
@@ -107,29 +127,46 @@ export default function DashboardPage() {
       <main className="container mx-auto px-4 py-6">
         {isAdmin && <StatsCards />}
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-          <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto mb-6">
-            <TabsTrigger value="list" className="flex items-center gap-2">
-              <LayoutList className="h-4 w-4" />
-              قائمة المراكز
-            </TabsTrigger>
-            <TabsTrigger value="add" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              إضافة مركز
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list">
-            <CentersTable />
-          </TabsContent>
-          
-          <TabsContent value="add">
-            <div className="max-w-3xl mx-auto">
-              <CenterForm onSuccess={() => setActiveTab("list")} />
+        <div className="mt-6">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <div className="flex justify-center mb-6">
+              <TabsList className="bg-secondary/50 border border-border/50 p-1">
+                <TabsTrigger 
+                  value="list" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6"
+                >
+                  <LayoutList className="h-4 w-4" />
+                  قائمة المراكز
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="add" 
+                  className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6"
+                >
+                  <Plus className="h-4 w-4" />
+                  إضافة مركز
+                </TabsTrigger>
+              </TabsList>
             </div>
-          </TabsContent>
-        </Tabs>
+            
+            <TabsContent value="list" className="mt-0">
+              <CentersTable />
+            </TabsContent>
+            
+            <TabsContent value="add" className="mt-0">
+              <div className="max-w-4xl mx-auto">
+                <CenterForm onSuccess={() => setActiveTab("list")} />
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </main>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 py-4 mt-8">
+        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
+          وزارة التضامن والإدماج الاجتماعي والأسرة - المملكة المغربية
+        </div>
+      </footer>
     </div>
   );
 }

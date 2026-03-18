@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { CenterForm } from "./center-form";
-import { Search, Trash2, Edit, Eye } from "lucide-react";
+import { Search, Trash2, Edit, Eye, Building, MapPin, FileText } from "lucide-react";
 
 export function CentersTable() {
   const { userData } = useAuth();
@@ -82,9 +82,12 @@ export function CentersTable() {
 
   if (loading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-12">
-          <Spinner className="h-8 w-8" />
+      <Card className="border-border/50 bg-card/80">
+        <CardContent className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <Spinner className="h-8 w-8 mx-auto text-primary" />
+            <p className="mt-4 text-sm text-muted-foreground">جاري تحميل البيانات...</p>
+          </div>
         </CardContent>
       </Card>
     );
@@ -92,17 +95,29 @@ export function CentersTable() {
 
   return (
     <>
-      <Card>
-        <CardHeader>
-          <CardTitle>قائمة البنايات</CardTitle>
-          <CardDescription>
-            {userData?.role === "admin" 
-              ? `جميع البنايات المسجلة (${filteredCenters.length} بناية)`
-              : `البنايات في إقليم ${userData?.province} (${filteredCenters.length} بناية)`
-            }
-          </CardDescription>
+      <Card className="border-border/50 bg-card/80">
+        <CardHeader className="border-b border-border/50">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/10">
+                <Building className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <CardTitle className="text-lg">قائمة البنايات</CardTitle>
+                <CardDescription>
+                  {userData?.role === "admin" 
+                    ? `جميع البنايات المسجلة`
+                    : `البنايات في إقليم ${userData?.province}`
+                  }
+                </CardDescription>
+              </div>
+            </div>
+            <Badge variant="secondary" className="text-primary bg-primary/10">
+              {filteredCenters.length} بناية
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -110,63 +125,88 @@ export function CentersTable() {
                 placeholder="بحث بالاسم أو البرنامج أو الإقليم..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10"
+                className="pr-10 bg-secondary/50 border-border/50 focus:border-primary"
               />
             </div>
           </div>
 
           {filteredCenters.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              لا توجد بنايات مسجلة
+            <div className="text-center py-16">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary/50 mb-4">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <p className="text-muted-foreground">لا توجد بنايات مسجلة</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">قم بإضافة بناية جديدة للبدء</p>
             </div>
           ) : (
-            <div className="rounded-lg border overflow-hidden">
+            <div className="rounded-lg border border-border/50 overflow-hidden">
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-right">اسم البناية</TableHead>
-                      <TableHead className="text-right">الإقليم</TableHead>
-                      <TableHead className="text-right">الجماعة الترابية</TableHead>
-                      <TableHead className="text-right">الوضعية الحالية</TableHead>
-                      <TableHead className="text-right">الحالة العامة</TableHead>
-                      <TableHead className="text-right">الإجراءات</TableHead>
+                    <TableRow className="bg-secondary/30 hover:bg-secondary/30">
+                      <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
+                      <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredCenters.map((center) => (
-                      <TableRow key={center.id}>
-                        <TableCell className="font-medium">{center.centerName}</TableCell>
-                        <TableCell>{center.province}</TableCell>
-                        <TableCell>{center.territorialCommunity}</TableCell>
+                      <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <Building className="h-4 w-4 text-muted-foreground" />
+                            {center.centerName}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {center.province}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{center.territorialCommunity}</TableCell>
                         <TableCell>
                           {center.currentStatus && (
-                            <Badge variant={
-                              center.currentStatus === "مستغل" ? "default" : 
-                              center.currentStatus === "متوقف" ? "destructive" : 
-                              "secondary"
-                            }>
+                            <Badge 
+                              variant="outline"
+                              className={
+                                center.currentStatus === "مستغل" 
+                                  ? "border-green-500/50 text-green-400 bg-green-500/10" 
+                                  : center.currentStatus === "متوقف" 
+                                    ? "border-red-500/50 text-red-400 bg-red-500/10" 
+                                    : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
+                              }
+                            >
                               {center.currentStatus}
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell>
                           {center.generalCondition && (
-                            <Badge variant={
-                              center.generalCondition === "جيدة" ? "default" : 
-                              center.generalCondition === "متدهورة" ? "destructive" : 
-                              "secondary"
-                            }>
+                            <Badge 
+                              variant="outline"
+                              className={
+                                center.generalCondition === "جيدة" 
+                                  ? "border-green-500/50 text-green-400 bg-green-500/10" 
+                                  : center.generalCondition === "متدهورة" 
+                                    ? "border-red-500/50 text-red-400 bg-red-500/10" 
+                                    : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
+                              }
+                            >
                               {center.generalCondition}
                             </Badge>
                           )}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1">
                             <Button
                               variant="ghost"
                               size="icon"
                               onClick={() => setSelectedCenter(center)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -174,6 +214,7 @@ export function CentersTable() {
                               variant="ghost"
                               size="icon"
                               onClick={() => setEditingCenter(center)}
+                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -182,8 +223,9 @@ export function CentersTable() {
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setDeleteConfirm(center)}
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                               >
-                                <Trash2 className="h-4 w-4 text-destructive" />
+                                <Trash2 className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
@@ -200,16 +242,18 @@ export function CentersTable() {
 
       {/* View Dialog */}
       <Dialog open={!!selectedCenter} onOpenChange={() => setSelectedCenter(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>تفاصيل البناية</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border/50">
+          <DialogHeader className="border-b border-border/50 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Building className="h-5 w-5 text-primary" />
+              تفاصيل البناية
+            </DialogTitle>
             <DialogDescription>{selectedCenter?.centerName}</DialogDescription>
           </DialogHeader>
           {selectedCenter && (
-            <div className="space-y-6">
+            <div className="space-y-6 pt-2">
               {/* أولًا - البيانات التعريفية */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">أولًا - البيانات التعريفية</h4>
+              <SectionCard title="أولًا - البيانات التعريفية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DetailItem label="اسم البناية أو المركز" value={selectedCenter.centerName} />
                   <DetailItem label="البرنامج الاجتماعي الموجود بالمركز" value={selectedCenter.socialProgram} />
@@ -218,11 +262,10 @@ export function CentersTable() {
                   <DetailItem label="القيادة / الدائرة" value={selectedCenter.circle} />
                   <DetailItem label="الإقليم أو العمالة" value={selectedCenter.province} />
                 </div>
-              </div>
+              </SectionCard>
 
               {/* ثانيًا - المعطيات الإدارية والقانونية */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">ثانيًا - المعطيات الإدارية والقانونية</h4>
+              <SectionCard title="ثانيًا - المعطيات الإدارية والقانونية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DetailItem label="هل البناية موضوع رهن إشارة التعاون الوطني من طرف INDH" value={selectedCenter.indhMortgage} className="md:col-span-2" />
                   <DetailItem label="الشريك أو الجمعية المتواجدة بالمركز الاجتماعي" value={selectedCenter.partnerAssociation} className="md:col-span-2" />
@@ -234,21 +277,19 @@ export function CentersTable() {
                   <DetailItem label="العدد التقريبي للمستفيدين شهريًا" value={selectedCenter.monthlyBeneficiaries} />
                   <DetailItem label="الوثائق القانونية المتوفرة" value={selectedCenter.availableLegalDocuments} className="md:col-span-2" />
                 </div>
-              </div>
+              </SectionCard>
 
               {/* ثالثًا - معطيات الإنجاز */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">ثالثًا - معطيات الإنجاز</h4>
+              <SectionCard title="ثالثًا - معطيات الإنجاز">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <DetailItem label="سنة إنجاز المشروع" value={selectedCenter.completionYear} />
                   <DetailItem label="تاريخ الشروع في الاستغلال الفعلي" value={selectedCenter.operationStartDate} />
                   <DetailItem label="الوضعية الحالية" value={selectedCenter.currentStatus} />
                 </div>
-              </div>
+              </SectionCard>
 
               {/* رابعًا - الوضعية التقنية للبناية */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">رابعًا - الوضعية التقنية للبناية</h4>
+              <SectionCard title="رابعًا - الوضعية التقنية للبناية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <DetailItem label="المساحة الإجمالية (متر مربع)" value={selectedCenter.totalArea} />
                   <DetailItem label="الحالة العامة" value={selectedCenter.generalCondition} />
@@ -259,26 +300,24 @@ export function CentersTable() {
                   <DetailItem label="الولوجيات للأشخاص في وضعية إعاقة" value={selectedCenter.hasAccessibility ? "نعم" : "لا"} />
                   <DetailItem label="ملاحظات تقنية وأشغال التأهيل المطلوبة" value={selectedCenter.technicalNotes} className="md:col-span-2" />
                 </div>
-              </div>
+              </SectionCard>
 
               {/* سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني</h4>
+              <SectionCard title="سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني">
                 <div className="grid grid-cols-1 gap-4">
                   <DetailItem label="هل تم اقتراح البناية للتسليم" value={selectedCenter.proposedForHandover ? "نعم" : "لا"} />
                   <DetailItem label="مبررات وأهداف التسليم" value={selectedCenter.handoverJustification} />
                   <DetailItem label="الوثائق المتوفرة قصد التسليم" value={selectedCenter.handoverDocuments} />
                   <DetailItem label="النواقص أو الإكراهات المسجلة" value={selectedCenter.handoverConstraints} />
                 </div>
-              </div>
+              </SectionCard>
 
               {/* سابعًا - ملاحظات وتوصيات */}
-              <div>
-                <h4 className="font-semibold mb-3 border-b pb-2 text-primary">سابعًا - ملاحظات وتوصيات</h4>
+              <SectionCard title="سابعًا - ملاحظات وتوصيات">
                 <div className="grid grid-cols-1 gap-4">
                   <DetailItem label="ملاحظات وتوصيات" value={selectedCenter.observations} />
                 </div>
-              </div>
+              </SectionCard>
             </div>
           )}
         </DialogContent>
@@ -286,9 +325,12 @@ export function CentersTable() {
 
       {/* Edit Dialog */}
       <Dialog open={!!editingCenter} onOpenChange={() => setEditingCenter(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>تعديل البناية</DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-card border-border/50">
+          <DialogHeader className="border-b border-border/50 pb-4">
+            <DialogTitle className="flex items-center gap-2">
+              <Edit className="h-5 w-5 text-primary" />
+              تعديل البناية
+            </DialogTitle>
             <DialogDescription>قم بتعديل بيانات البناية {editingCenter?.centerName}</DialogDescription>
           </DialogHeader>
           <CenterForm 
@@ -300,15 +342,15 @@ export function CentersTable() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent>
+        <DialogContent className="bg-card border-border/50">
           <DialogHeader>
-            <DialogTitle>تأكيد الحذف</DialogTitle>
+            <DialogTitle className="text-destructive">تأكيد الحذف</DialogTitle>
             <DialogDescription>
               هل أنت متأكد من حذف البناية "{deleteConfirm?.centerName}"؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+            <Button variant="outline" onClick={() => setDeleteConfirm(null)} className="border-border/50">
               إلغاء
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
@@ -321,11 +363,20 @@ export function CentersTable() {
   );
 }
 
+function SectionCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-secondary/30 rounded-lg p-4 border border-border/30">
+      <h4 className="font-semibold mb-4 text-primary text-sm">{title}</h4>
+      {children}
+    </div>
+  );
+}
+
 function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
   return (
     <div className={`space-y-1 ${className}`}>
-      <p className="text-sm font-medium text-muted-foreground">{label}</p>
-      <p className="text-sm">{value || "-"}</p>
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="text-sm text-foreground">{value || "-"}</p>
     </div>
   );
 }
