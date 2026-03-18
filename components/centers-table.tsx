@@ -34,12 +34,14 @@ export function CentersTable() {
 
     let q;
     if (userData.role === "admin") {
-      q = query(collection(db, "centers"), orderBy("createdAt", "desc"));
+      // Admin can see all centers
+      q = query(collection(db, "centers"));
     } else {
+      // Users can only see centers in their province
+      // Note: Using only where() to avoid requiring composite index
       q = query(
         collection(db, "centers"),
-        where("province", "==", userData.province),
-        orderBy("createdAt", "desc")
+        where("province", "==", userData.province)
       );
     }
 
@@ -48,7 +50,16 @@ export function CentersTable() {
         id: doc.id,
         ...doc.data()
       })) as Center[];
+      // Sort client-side by createdAt descending
+      centersData.sort((a, b) => {
+        const dateA = a.createdAt?.toDate?.() || new Date(0);
+        const dateB = b.createdAt?.toDate?.() || new Date(0);
+        return dateB.getTime() - dateA.getTime();
+      });
       setCenters(centersData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching centers:", error);
       setLoading(false);
     });
 
