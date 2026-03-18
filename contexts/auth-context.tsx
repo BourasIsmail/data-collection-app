@@ -36,17 +36,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       if (user) {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists()) {
-          setUserData(userDoc.data() as UserData);
-        }
+        // Fetch user data asynchronously with proper error handling
+        getDoc(doc(db, "users", user.uid))
+          .then((userDoc) => {
+            if (userDoc.exists()) {
+              setUserData(userDoc.data() as UserData);
+            } else {
+              setUserData(null);
+            }
+          })
+          .catch(() => {
+            // Firestore not configured yet - silently handle
+            setUserData(null);
+          })
+          .finally(() => {
+            setLoading(false);
+          });
       } else {
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -54,9 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-    if (userDoc.exists()) {
-      setUserData(userDoc.data() as UserData);
+    try {
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      if (userDoc.exists()) {
+        setUserData(userDoc.data() as UserData);
+      }
+    } catch (error) {
+      console.error("Error fetching user data after sign in:", error);
+      // User authenticated but Firestore failed - they can still use the app
     }
   };
 
@@ -75,8 +92,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       province,
       displayName
     };
-    await setDoc(doc(db, "users", userCredential.user.uid), newUserData);
-    setUserData(newUserData);
+    try {
+      await setDoc(doc(db, "users", userCredential.user.uid), newUserData);
+      setUserData(newUserData);
+    } catch (error) {
+      console.error("Error saving user data:", error);
+      // Still set local userData even if Firestore fails
+      setUserData(newUserData);
+      throw new Error("تم إنشاء الحساب لكن فشل حفظ البيانات. تأكد من إعداد قواعد Firestore.");
+    }
   };
 
   const signOut = async () => {

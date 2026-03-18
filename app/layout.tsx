@@ -39,7 +39,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={`${ibmPlexArabic.className} antialiased`}>
+      <body className={`${ibmPlexArabic.className} antialiased`} suppressHydrationWarning>
         <AuthProvider>
           {children}
         </AuthProvider>

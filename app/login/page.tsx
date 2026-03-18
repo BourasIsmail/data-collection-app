@@ -56,7 +56,14 @@ export default function LoginPage() {
       await signUp(email, password, displayName, selectedProvince, selectedRole);
       router.push("/dashboard");
     } catch (err) {
-      setError("فشل إنشاء الحساب. قد يكون البريد الإلكتروني مستخدماً بالفعل.");
+      const error = err as Error;
+      if (error.message.includes("Firestore")) {
+        setError(error.message);
+      } else if (error.message.includes("email-already-in-use")) {
+        setError("البريد الإلكتروني مستخدم بالفعل.");
+      } else {
+        setError("فشل إنشاء الحساب. تحقق من البيانات أو حاول لاحقاً.");
+      }
       console.error(err);
     } finally {
       setLoading(false);
