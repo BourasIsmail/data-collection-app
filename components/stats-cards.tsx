@@ -5,8 +5,7 @@ import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Center } from "@/types/center";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, MapPin, Users, Building } from "lucide-react";
-import { regions } from "@/lib/morocco-data";
+import { Building2, MapPin, CheckCircle, AlertTriangle } from "lucide-react";
 
 export function StatsCards() {
   const [centers, setCenters] = useState<Center[]>([]);
@@ -22,8 +21,7 @@ export function StatsCards() {
       setCenters(centersData);
       setLoading(false);
     }, (error) => {
-      // Silently handle permission errors
-      console.warn("Stats fetch error (expected if Firestore not configured):", error.code);
+      console.warn("Stats fetch error:", error.code);
       setLoading(false);
     });
 
@@ -31,34 +29,36 @@ export function StatsCards() {
   }, []);
 
   const totalCenters = centers.length;
-  const uniqueRegions = new Set(centers.map(c => c.region)).size;
   const uniqueProvinces = new Set(centers.map(c => c.province)).size;
-  const urbanCenters = centers.filter(c => c.environment === "حضري").length;
+  const operationalCenters = centers.filter(c => c.currentStatus === "مستغل").length;
+  const needsRehabilitation = centers.filter(c => 
+    c.currentStatus === "يحتاج تأهيل" || c.generalCondition === "متدهورة"
+  ).length;
 
   const stats = [
     {
-      title: "إجمالي المراكز",
+      title: "إجمالي البنايات",
       value: loading ? "-" : totalCenters,
       icon: Building2,
-      description: "مركز مسجل"
-    },
-    {
-      title: "الجهات المغطاة",
-      value: loading ? "-" : `${uniqueRegions}/${regions.length}`,
-      icon: MapPin,
-      description: "جهة"
+      description: "بناية مسجلة"
     },
     {
       title: "الأقاليم المغطاة",
       value: loading ? "-" : uniqueProvinces,
-      icon: Users,
+      icon: MapPin,
       description: "إقليم"
     },
     {
-      title: "المراكز الحضرية",
-      value: loading ? "-" : urbanCenters,
-      icon: Building,
-      description: `من ${totalCenters} مركز`
+      title: "البنايات المستغلة",
+      value: loading ? "-" : operationalCenters,
+      icon: CheckCircle,
+      description: `من ${totalCenters} بناية`
+    },
+    {
+      title: "تحتاج تأهيل",
+      value: loading ? "-" : needsRehabilitation,
+      icon: AlertTriangle,
+      description: "بناية"
     }
   ];
 
