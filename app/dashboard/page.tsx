@@ -6,16 +6,23 @@ import { useAuth } from "@/contexts/auth-context";
 import { CenterForm } from "@/components/center-form";
 import { CentersTable } from "@/components/centers-table";
 import { StatsCards } from "@/components/stats-cards";
+import { UserManagement } from "@/components/user-management";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Spinner } from "@/components/ui/spinner";
-import { LogOut, Building2, Plus, LayoutList, Shield, MapPin, AlertTriangle } from "lucide-react";
+import { LogOut, Building2, Plus, LayoutList, Shield, MapPin, AlertTriangle, Users, Download, FileSpreadsheet } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { collection, query, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { exportToCSV, exportToExcel } from "@/lib/export-utils";
+import { Center } from "@/types/center";
 
 export default function DashboardPage() {
   const { user, userData, loading, signOut } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("list");
+  const [centers, setCenters] = useState<Center[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -23,9 +30,37 @@ export default function DashboardPage() {
     }
   }, [user, loading, router]);
 
+  // Fetch centers for export
+  useEffect(() => {
+    if (!userData) return;
+    
+    const q = query(collection(db, "centers"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const centersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Center[];
+      setCenters(centersData);
+    }, (error) => {
+      console.error("Error fetching centers for export:", error);
+    });
+
+    return () => unsubscribe();
+  }, [userData]);
+
   const handleSignOut = async () => {
     await signOut();
     router.push("/login");
+  };
+
+  const handleExportCSV = () => {
+    const date = new Date().toISOString().split('T')[0];
+    exportToCSV(centers, `centers-data-${date}`);
+  };
+
+  const handleExportExcel = () => {
+    const date = new Date().toISOString().split('T')[0];
+    exportToExcel(centers, `centers-data-${date}`);
   };
 
   if (loading) {
@@ -105,6 +140,28 @@ export default function DashboardPage() {
             </div>
             
             <div className="flex items-center gap-3">
+              {/* Export Button - Admin Only */}
+              {isAdmin && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="hidden sm:flex">
+                      <Download className="h-4 w-4 ml-2" />
+                      تصدير البيانات
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={handleExportCSV}>
+                      <FileSpreadsheet className="h-4 w-4 ml-2" />
+                      تصدير CSV
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportExcel}>
+                      <FileSpreadsheet className="h-4 w-4 ml-2" />
+                      تصدير Excel
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              
               <div className="hidden sm:block text-left">
                 <p className="text-sm font-medium text-foreground">{userData.displayName}</p>
                 <p className="text-xs text-muted-foreground">{userData.email}</p>
@@ -145,6 +202,15 @@ export default function DashboardPage() {
                   <Plus className="h-4 w-4" />
                   إضافة مركز
                 </TabsTrigger>
+                {isAdmin && (
+                  <TabsTrigger 
+                    value="users" 
+                    className="flex items-center gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground px-6"
+                  >
+                    <Users className="h-4 w-4" />
+                    المستخدمين
+                  </TabsTrigger>
+                )}
               </TabsList>
             </div>
             
@@ -157,6 +223,14 @@ export default function DashboardPage() {
                 <CenterForm onSuccess={() => setActiveTab("list")} />
               </div>
             </TabsContent>
+
+            {isAdmin && (
+              <TabsContent value="users" className="mt-0">
+                <div className="max-w-4xl mx-auto">
+                  <UserManagement />
+                </div>
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </main>

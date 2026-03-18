@@ -1,5 +1,6 @@
 "use client";
-// Center form component with cascading location dropdowns
+
+// Center form component with cascading location dropdowns for Moroccan administrative divisions
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -552,7 +553,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">القاعات والمرافق المتوفرة</label>
+              <label className="block text-sm font-medium">القاعا�� والمرافق المتوفرة</label>
               <Textarea
                 value={formData.availableRooms}
                 onChange={(e) => setFormData(prev => ({ ...prev, availableRooms: e.target.value }))}
@@ -681,7 +682,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">سابعًا - ملاحظات وتوصيات</h3>
             
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">ملاحظات عامة</label>
+              <label className="block text-sm font-medium">ملاحظات عام��</label>
               <Textarea
                 value={formData.observations}
                 onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
