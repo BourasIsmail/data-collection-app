@@ -24,6 +24,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
   const { userData } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [formInitialized, setFormInitialized] = useState(false);
   
   const [formData, setFormData] = useState({
     region: "",
@@ -42,6 +43,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
 
   const [availableProvinces, setAvailableProvinces] = useState<string[]>([]);
 
+  // Initialize form when editing or for user accounts
   useEffect(() => {
     if (editCenter) {
       setFormData({
@@ -59,7 +61,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
         servicesProvided: editCenter.servicesProvided
       });
       setAvailableProvinces(getProvincesByRegion(editCenter.region));
+      setFormInitialized(true);
     } else if (userData?.role === "user" && userData.province) {
+      // Auto-fill region and province for regular users
       const userRegion = getRegionByProvince(userData.province);
       if (userRegion) {
         setFormData(prev => ({
@@ -67,10 +71,24 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
           region: userRegion,
           province: userData.province
         }));
-        setAvailableProvinces([userData.province]);
+        setAvailableProvinces(getProvincesByRegion(userRegion));
+        setFormInitialized(true);
       }
+    } else if (userData?.role === "admin") {
+      setFormInitialized(true);
     }
   }, [editCenter, userData]);
+  
+  // Don't render form until initialized for users
+  if (!formInitialized && userData?.role === "user") {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Spinner className="h-8 w-8" />
+        </CardContent>
+      </Card>
+    );
+  }
 
   const handleRegionChange = (region: string) => {
     const provinces = getProvincesByRegion(region);

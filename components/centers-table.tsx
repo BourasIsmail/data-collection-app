@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot, deleteDoc, doc, orderBy } from "firebase/firestore";
+import { collection, query, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Center } from "@/types/center";
 import { useAuth } from "@/contexts/auth-context";
@@ -32,24 +32,20 @@ export function CentersTable() {
   useEffect(() => {
     if (!userData) return;
 
-    let q;
-    if (userData.role === "admin") {
-      // Admin can see all centers
-      q = query(collection(db, "centers"));
-    } else {
-      // Users can only see centers in their province
-      // Note: Using only where() to avoid requiring composite index
-      q = query(
-        collection(db, "centers"),
-        where("province", "==", userData.province)
-      );
-    }
+    // Always fetch all centers - filter client-side for users to avoid composite index requirement
+    const q = query(collection(db, "centers"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const centersData = snapshot.docs.map(doc => ({
+      let centersData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as Center[];
+      
+      // Filter by province for non-admin users
+      if (userData.role !== "admin" && userData.province) {
+        centersData = centersData.filter(c => c.province === userData.province);
+      }
+      
       // Sort client-side by createdAt descending
       centersData.sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(0);
@@ -265,6 +261,7 @@ export function CentersTable() {
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>تعديل المركز</DialogTitle>
+            <DialogDescription>قم بتعديل بيانات المركز {editingCenter?.centerName}</DialogDescription>
           </DialogHeader>
           <CenterForm 
             editCenter={editingCenter} 
