@@ -107,7 +107,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-muted-foreground text-sm mt-6">
-          وزارة التضامن والإدماج الاجتماعي والأسرة
+          التعاون الوطني
         </p>
       </div>
     </div>

@@ -238,7 +238,7 @@ export default function DashboardPage() {
       {/* Footer */}
       <footer className="border-t border-border/50 py-4 mt-8">
         <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          وزارة التضامن والإدماج الاجتماعي والأسرة - المملكة المغربية
+          التعاون الوطني
         </div>
       </footer>
     </div>
