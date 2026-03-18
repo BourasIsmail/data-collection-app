@@ -119,7 +119,6 @@ export function CentersTable() {
 
   const handleExportCSV = () => {
     const dataToExport = filteredCenters.length > 0 ? filteredCenters : centers;
-    console.log("[v0] Exporting CSV - filteredCenters:", filteredCenters.length, "centers:", centers.length, "dataToExport:", dataToExport.length);
     if (dataToExport.length === 0) {
       alert("لا توجد بيانات للتصدير");
       return;
@@ -129,7 +128,6 @@ export function CentersTable() {
 
   const handleExportExcel = () => {
     const dataToExport = filteredCenters.length > 0 ? filteredCenters : centers;
-    console.log("[v0] Exporting Excel - filteredCenters:", filteredCenters.length, "centers:", centers.length, "dataToExport:", dataToExport.length);
     if (dataToExport.length === 0) {
       alert("لا توجد بيانات للتصدير");
       return;
@@ -315,10 +313,10 @@ export function CentersTable() {
                           <TableCell>
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <MapPin className="h-3.5 w-3.5" />
-                              {center.province}
+                              {center.province || "-"}
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground">{center.territorialCommunity}</TableCell>
+                          <TableCell className="text-muted-foreground">{center.territorialCommunity || "-"}</TableCell>
                           <TableCell>
                             {center.currentStatus && (
                               <Badge 

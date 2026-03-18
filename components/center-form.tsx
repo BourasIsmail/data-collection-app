@@ -1,6 +1,7 @@
 "use client";
 
 // Center form component with cascading location dropdowns for Moroccan administrative divisions
+// CardDescription imported from card.tsx
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
