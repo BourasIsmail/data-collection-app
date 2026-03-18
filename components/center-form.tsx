@@ -5,13 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Center } from "@/types/center";
@@ -183,9 +177,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
     <Card className="w-full">
       <CardHeader className="text-right">
         <CardTitle>{editCenter ? "تعديل بيانات البناية" : "إضافة بناية جديدة"}</CardTitle>
-        <CardDescription>
-          {editCenter ? "قم بتعديل بيانات البناية" : "قم بملء جميع الحقول المطلوبة"}
-        </CardDescription>
+<p className="text-sm text-muted-foreground">
+  {editCenter ? "قم بتعديل بيانات البناية" : "قم بملء جميع الحقول المطلوبة"}
+</p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-8">
