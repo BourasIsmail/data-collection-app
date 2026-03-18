@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Center } from "@/types/center";
@@ -13,6 +13,11 @@ import { useAuth } from "@/contexts/auth-context";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { CheckCircle } from "lucide-react";
+import { 
+  provinces as moroccoProvinces, 
+  getDistrictsByProvince, 
+  getCommuneNames 
+} from "@/lib/morocco-admin-divisions";
 
 interface CenterFormProps {
   onSuccess?: () => void;
@@ -71,6 +76,10 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
   const [formInitialized, setFormInitialized] = useState(false);
   
   const [formData, setFormData] = useState(initialFormData);
+  
+  // Cascading dropdown states
+  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
+  const [availableCommunes, setAvailableCommunes] = useState<string[]>([]);
 
   // Initialize form when editing or for user accounts
   useEffect(() => {
@@ -108,12 +117,21 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
         handoverConstraints: editCenter.handoverConstraints || "",
         observations: editCenter.observations || ""
       });
+      // Initialize cascading dropdowns for editing
+      if (editCenter.province) {
+        setAvailableDistricts(getDistrictsByProvince(editCenter.province));
+        if (editCenter.circle) {
+          setAvailableCommunes(getCommuneNames(editCenter.province, editCenter.circle));
+        }
+      }
       setFormInitialized(true);
     } else if (userData?.role === "user" && userData.province) {
       setFormData(prev => ({
         ...prev,
         province: userData.province
       }));
+      // Initialize districts for user's province
+      setAvailableDistricts(getDistrictsByProvince(userData.province));
       setFormInitialized(true);
     } else if (userData?.role === "admin") {
       setFormInitialized(true);
@@ -226,40 +244,97 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الجماعة الترابية</label>
-                <Input
-                  value={formData.territorialCommunity}
-                  onChange={(e) => setFormData(prev => ({ ...prev, territorialCommunity: e.target.value }))}
-                  placeholder="أدخل الجماعة الترابية"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">القيادة / الدائرة</label>
-                <Input
-                  value={formData.circle}
-                  onChange={(e) => setFormData(prev => ({ ...prev, circle: e.target.value }))}
-                  placeholder="أدخل القيادة أو الدائرة"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
-
+              {/* الإقليم أو العمالة - Province (Top level) */}
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">الإقليم أو العمالة</label>
-                <Input
-                  value={formData.province}
-                  onChange={(e) => setFormData(prev => ({ ...prev, province: e.target.value }))}
-                  placeholder="أدخل الإقليم أو العمالة"
-                  className="text-right"
-                  dir="rtl"
+                <Select 
+                  value={formData.province} 
+                  onValueChange={(v) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      province: v,
+                      circle: "", // Reset child selections
+                      territorialCommunity: ""
+                    }));
+                    setAvailableDistricts(getDistrictsByProvince(v));
+                    setAvailableCommunes([]); // Reset communes
+                  }}
                   disabled={isUserMode}
-                />
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="اختر الإقليم أو العمالة" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {moroccoProvinces.map((province) => (
+                      <SelectItem key={province.name} value={province.name}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* القيادة / الدائرة - District (Second level) */}
+              <div className="space-y-2 text-right">
+                <label className="block text-sm font-medium">القيادة / الدائرة</label>
+                <Select 
+                  value={formData.circle} 
+                  onValueChange={(v) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      circle: v,
+                      territorialCommunity: "" // Reset commune
+                    }));
+                    setAvailableCommunes(getCommuneNames(formData.province, v));
+                  }}
+                  disabled={!formData.province}
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder={formData.province ? "اختر القيادة / الدائرة" : "اختر الإقليم أولاً"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {availableDistricts.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* الجماعة الترابية - Commune (Third level) */}
+              <div className="space-y-2 text-right">
+                <label className="block text-sm font-medium">الجماعة الترابية</label>
+                <Select 
+                  value={formData.territorialCommunity} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
+                  disabled={!formData.circle}
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder={formData.circle ? "اختر الجماعة الترابية" : "اختر القيادة أولاً"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {availableCommunes.map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
+
+            {/* Summary of selected location */}
+            {formData.province && formData.circle && formData.territorialCommunity && (
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-right">
+                <p className="text-sm font-medium text-primary mb-2">الموقع المختار:</p>
+                <p className="text-sm">
+                  <span className="font-medium">الإقليم:</span> {formData.province} | 
+                  <span className="font-medium"> القيادة/الدائرة:</span> {formData.circle} | 
+                  <span className="font-medium"> الجماعة:</span> {formData.territorialCommunity}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* ثانيًا - المعطيات الإدارية والقانونية */}
