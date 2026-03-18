@@ -244,37 +244,28 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* الإقليم أو العمالة - Province (Top level) */}
+              {/* الجماعة الترابية - Commune (Third level) - Leftmost in RTL */}
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الإقليم أو العمالة</label>
+                <label className="block text-sm font-medium">الجماعة الترابية</label>
                 <Select 
-                  value={formData.province} 
-                  onValueChange={(v) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      province: v,
-                      circle: "", // Reset child selections
-                      territorialCommunity: ""
-                    }));
-                    setAvailableDistricts(getDistrictsByProvince(v));
-                    setAvailableCommunes([]); // Reset communes
-                  }}
-                  disabled={isUserMode}
+                  value={formData.territorialCommunity} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
+                  disabled={!formData.circle}
                 >
                   <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر الإقليم أو العمالة" />
+                    <SelectValue placeholder={formData.circle ? "اختر الجماعة الترابية" : "اختر القيادة أولاً"} />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    {moroccoProvinces.map((province) => (
-                      <SelectItem key={province.name} value={province.name}>
-                        {province.name}
+                    {availableCommunes.map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* القيادة / الدائرة - District (Second level) */}
+              {/* القيادة / الدائرة - District (Second level) - Middle */}
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">القيادة / الدائرة</label>
                 <Select 
@@ -302,21 +293,30 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 </Select>
               </div>
 
-              {/* الجماعة الترابية - Commune (Third level) */}
+              {/* الإقليم أو العمالة - Province (Top level) - Rightmost in RTL */}
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الجماعة الترابية</label>
+                <label className="block text-sm font-medium">الإقليم أو العمالة</label>
                 <Select 
-                  value={formData.territorialCommunity} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
-                  disabled={!formData.circle}
+                  value={formData.province} 
+                  onValueChange={(v) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      province: v,
+                      circle: "", // Reset child selections
+                      territorialCommunity: ""
+                    }));
+                    setAvailableDistricts(getDistrictsByProvince(v));
+                    setAvailableCommunes([]); // Reset communes
+                  }}
+                  disabled={isUserMode}
                 >
                   <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder={formData.circle ? "اختر الجماعة الترابية" : "اختر القيادة أولاً"} />
+                    <SelectValue placeholder="اختر الإقليم أو العمالة" />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    {availableCommunes.map((commune) => (
-                      <SelectItem key={commune} value={commune}>
-                        {commune}
+                    {moroccoProvinces.map((province) => (
+                      <SelectItem key={province.name} value={province.name}>
+                        {province.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
