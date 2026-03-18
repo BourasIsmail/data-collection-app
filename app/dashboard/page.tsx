@@ -35,8 +35,34 @@ export default function DashboardPage() {
     );
   }
 
-  if (!user || !userData) {
+  if (!user) {
     return null;
+  }
+
+  // If userData isn't loaded yet (Firestore not configured), show setup message
+  if (!userData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <div className="bg-background p-8 rounded-lg shadow-lg max-w-md text-center space-y-4">
+          <div className="bg-amber-100 text-amber-800 p-4 rounded-lg">
+            <h2 className="font-bold text-lg mb-2">إعداد قاعدة البيانات مطلوب</h2>
+            <p className="text-sm mb-4">
+              تم تسجيل الدخول بنجاح، لكن يجب إعداد Firestore في وحدة تحكم Firebase.
+            </p>
+            <ol className="text-sm text-right space-y-2 list-decimal list-inside">
+              <li>افتح وحدة تحكم Firebase</li>
+              <li>اذهب إلى Firestore Database</li>
+              <li>أنشئ قاعدة بيانات جديدة</li>
+              <li>في قسم Rules، اختر Test Mode أو أضف قواعد الأمان</li>
+            </ol>
+          </div>
+          <Button variant="outline" onClick={handleSignOut} className="w-full">
+            <LogOut className="h-4 w-4 ml-2" />
+            تسجيل الخروج
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   const isAdmin = userData.role === "admin";

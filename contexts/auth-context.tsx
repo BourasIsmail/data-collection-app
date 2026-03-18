@@ -45,14 +45,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (userDoc.exists()) {
               setUserData(userDoc.data() as UserData);
             } else {
+              // User exists in Auth but not in Firestore yet
               setUserData(null);
             }
+            setLoading(false);
           })
-          .catch(() => {
-            // Firestore not configured yet - silently handle
+          .catch((err) => {
+            // Firestore not configured or permission denied - silently handle
+            // This is expected when Firestore rules aren't set up yet
+            if (err?.code !== 'permission-denied') {
+              console.warn("Firestore error (expected if not configured):", err?.code);
+            }
             setUserData(null);
-          })
-          .finally(() => {
             setLoading(false);
           });
       } else {
@@ -65,16 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    try {
-      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-      if (userDoc.exists()) {
-        setUserData(userDoc.data() as UserData);
-      }
-    } catch (error) {
-      console.error("Error fetching user data after sign in:", error);
-      // User authenticated but Firestore failed - they can still use the app
-    }
+    await signInWithEmailAndPassword(auth, email, password);
+    // User data will be fetched by onAuthStateChanged listener
   };
 
   const signUp = async (
