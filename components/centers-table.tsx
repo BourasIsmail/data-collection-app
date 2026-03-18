@@ -293,47 +293,49 @@ export function CentersTable() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                        <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
                         <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedCenters.map((center) => (
                         <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
-                          {/* الإجراءات */}
-                          <TableCell className="text-right">
-                            <div className="flex items-center gap-1 justify-start">
-                              {userData?.role === "admin" && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeleteConfirm(center)}
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setEditingCenter(center)}
-                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setSelectedCenter(center)}
-                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </Button>
+                          {/* اسم البناية */}
+                          <TableCell className="font-medium text-right">
+                            <div className="flex items-center gap-2 justify-end">
+                              <Building className="h-4 w-4 text-muted-foreground" />
+                              {center.centerName}
                             </div>
+                          </TableCell>
+                          {/* الإقليم */}
+                          <TableCell className="text-right">
+                            <div className="flex items-center gap-1.5 text-muted-foreground justify-end">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {center.province || "-"}
+                            </div>
+                          </TableCell>
+                          {/* الجماعة الترابية */}
+                          <TableCell className="text-muted-foreground text-right">{center.territorialCommunity || "-"}</TableCell>
+                          {/* الوضعية الحالية */}
+                          <TableCell className="text-right">
+                            {center.currentStatus && (
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  center.currentStatus === "مستغل" 
+                                    ? "border-green-500/50 text-green-600 bg-green-500/10" 
+                                    : center.currentStatus === "متوقف" 
+                                      ? "border-red-500/50 text-red-600 bg-red-500/10" 
+                                      : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
+                                }
+                              >
+                                {center.currentStatus}
+                              </Badge>
+                            )}
                           </TableCell>
                           {/* الحالة العامة */}
                           <TableCell className="text-right">
@@ -352,37 +354,35 @@ export function CentersTable() {
                               </Badge>
                             )}
                           </TableCell>
-                          {/* الوضعية الحالية */}
+                          {/* الإجراءات */}
                           <TableCell className="text-right">
-                            {center.currentStatus && (
-                              <Badge 
-                                variant="outline"
-                                className={
-                                  center.currentStatus === "مستغل" 
-                                    ? "border-green-500/50 text-green-600 bg-green-500/10" 
-                                    : center.currentStatus === "متوقف" 
-                                      ? "border-red-500/50 text-red-600 bg-red-500/10" 
-                                      : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
-                                }
+                            <div className="flex items-center gap-1 justify-end">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSelectedCenter(center)}
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                               >
-                                {center.currentStatus}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          {/* الجماعة الترابية */}
-                          <TableCell className="text-muted-foreground text-right">{center.territorialCommunity || "-"}</TableCell>
-                          {/* الإقليم */}
-                          <TableCell className="text-right">
-                            <div className="flex items-center gap-1.5 text-muted-foreground justify-start">
-                              <MapPin className="h-3.5 w-3.5" />
-                              {center.province || "-"}
-                            </div>
-                          </TableCell>
-                          {/* اسم البناية */}
-                          <TableCell className="font-medium text-right">
-                            <div className="flex items-center gap-2 justify-start">
-                              <Building className="h-4 w-4 text-muted-foreground" />
-                              {center.centerName}
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingCenter(center)}
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              {userData?.role === "admin" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteConfirm(center)}
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
