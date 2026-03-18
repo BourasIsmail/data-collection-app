@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { collection, query, onSnapshot, deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Center } from "@/types/center";
@@ -12,8 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CenterForm } from "./center-form";
-import { Search, Trash2, Edit, Eye, Building, MapPin, FileText } from "lucide-react";
+import { exportToCSV, exportToExcel } from "@/lib/export-utils";
+import { Search, Trash2, Edit, Eye, Building, MapPin, FileText, Download, ChevronRight, ChevronLeft, FileSpreadsheet } from "lucide-react";
+
+const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
 
 export function CentersTable() {
   const { userData } = useAuth();
@@ -24,6 +28,15 @@ export function CentersTable() {
   const [editingCenter, setEditingCenter] = useState<Center | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<Center | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
+  // Filter state
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [conditionFilter, setConditionFilter] = useState<string>("all");
+  const [provinceFilter, setProvinceFilter] = useState<string>("all");
 
   useEffect(() => {
     if (!userData) return;
@@ -57,15 +70,39 @@ export function CentersTable() {
     return () => unsubscribe();
   }, [userData]);
 
-  const filteredCenters = centers.filter(center => {
-    const matchesSearch = 
-      center.centerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.socialProgram?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.province?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.territorialCommunity?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
+  // Get unique provinces for filter
+  const uniqueProvinces = useMemo(() => {
+    const provinces = [...new Set(centers.map(c => c.province).filter(Boolean))];
+    return provinces.sort();
+  }, [centers]);
+
+  // Filtered centers
+  const filteredCenters = useMemo(() => {
+    return centers.filter(center => {
+      const matchesSearch = 
+        center.centerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        center.socialProgram?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        center.province?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        center.territorialCommunity?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === "all" || center.currentStatus === statusFilter;
+      const matchesCondition = conditionFilter === "all" || center.generalCondition === conditionFilter;
+      const matchesProvince = provinceFilter === "all" || center.province === provinceFilter;
+      
+      return matchesSearch && matchesStatus && matchesCondition && matchesProvince;
+    });
+  }, [centers, searchTerm, statusFilter, conditionFilter, provinceFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredCenters.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedCenters = filteredCenters.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, conditionFilter, provinceFilter, itemsPerPage]);
 
   const handleDelete = async () => {
     if (!deleteConfirm?.id) return;
@@ -79,6 +116,23 @@ export function CentersTable() {
       setDeleting(false);
     }
   };
+
+  const handleExportCSV = () => {
+    exportToCSV(filteredCenters, `centers-export-${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const handleExportExcel = () => {
+    exportToExcel(filteredCenters, `centers-export-${new Date().toISOString().split('T')[0]}`);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm("");
+    setStatusFilter("all");
+    setConditionFilter("all");
+    setProvinceFilter("all");
+  };
+
+  const hasActiveFilters = searchTerm || statusFilter !== "all" || conditionFilter !== "all" || provinceFilter !== "all";
 
   if (loading) {
     return (
@@ -118,15 +172,97 @@ export function CentersTable() {
           </div>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="بحث بالاسم أو البرنامج أو الإقليم..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10 bg-secondary/50 border-border/50 focus:border-primary"
-              />
+          {/* Export Buttons */}
+          {userData?.role === "admin" && filteredCenters.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportCSV}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                تصدير CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportExcel}
+                className="gap-2"
+              >
+                <FileSpreadsheet className="h-4 w-4" />
+                تصدير Excel
+              </Button>
+              {hasActiveFilters && (
+                <span className="text-xs text-muted-foreground mr-2">
+                  (سيتم تصدير {filteredCenters.length} من {centers.length} بناية حسب الفلاتر المطبقة)
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Search and Filters */}
+          <div className="space-y-4 mb-6">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="بحث بالاسم أو البرنامج أو الإقليم..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pr-10 bg-secondary/50 border-border/50 focus:border-primary"
+                />
+              </div>
+            </div>
+            
+            <div className="flex flex-wrap gap-3">
+              {/* Province Filter - Admin only */}
+              {userData?.role === "admin" && (
+                <Select value={provinceFilter} onValueChange={setProvinceFilter}>
+                  <SelectTrigger className="w-[180px] bg-secondary/50 border-border/50">
+                    <SelectValue placeholder="الإقليم" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">كل الأقاليم</SelectItem>
+                    {uniqueProvinces.map((province) => (
+                      <SelectItem key={province} value={province}>{province}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Status Filter */}
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] bg-secondary/50 border-border/50">
+                  <SelectValue placeholder="الوضعية" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل الوضعيات</SelectItem>
+                  <SelectItem value="مستغل">مستغل</SelectItem>
+                  <SelectItem value="متوقف">متوقف</SelectItem>
+                  <SelectItem value="في طور الإنجاز">في طور الإنجاز</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Condition Filter */}
+              <Select value={conditionFilter} onValueChange={setConditionFilter}>
+                <SelectTrigger className="w-[160px] bg-secondary/50 border-border/50">
+                  <SelectValue placeholder="الحالة العامة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل الحالات</SelectItem>
+                  <SelectItem value="جيدة">جيدة</SelectItem>
+                  <SelectItem value="متوسطة">متوسطة</SelectItem>
+                  <SelectItem value="متدهورة">متدهورة</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground">
+                  مسح الفلاتر
+                </Button>
+              )}
             </div>
           </div>
 
@@ -136,106 +272,157 @@ export function CentersTable() {
                 <FileText className="h-8 w-8 text-muted-foreground" />
               </div>
               <p className="text-muted-foreground">لا توجد بنايات مسجلة</p>
-              <p className="text-sm text-muted-foreground/70 mt-1">قم بإضافة بناية جديدة للبدء</p>
+              <p className="text-sm text-muted-foreground/70 mt-1">
+                {hasActiveFilters ? "جرب تغيير معايير البحث أو الفلاتر" : "قم بإضافة بناية جديدة للبدء"}
+              </p>
             </div>
           ) : (
-            <div className="rounded-lg border border-border/50 overflow-hidden">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                      <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
-                      <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
-                      <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
-                      <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
-                      <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
-                      <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredCenters.map((center) => (
-                      <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            <Building className="h-4 w-4 text-muted-foreground" />
-                            {center.centerName}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {center.province}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{center.territorialCommunity}</TableCell>
-                        <TableCell>
-                          {center.currentStatus && (
-                            <Badge 
-                              variant="outline"
-                              className={
-                                center.currentStatus === "مستغل" 
-                                  ? "border-green-500/50 text-green-400 bg-green-500/10" 
-                                  : center.currentStatus === "متوقف" 
-                                    ? "border-red-500/50 text-red-400 bg-red-500/10" 
-                                    : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
-                              }
-                            >
-                              {center.currentStatus}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {center.generalCondition && (
-                            <Badge 
-                              variant="outline"
-                              className={
-                                center.generalCondition === "جيدة" 
-                                  ? "border-green-500/50 text-green-400 bg-green-500/10" 
-                                  : center.generalCondition === "متدهورة" 
-                                    ? "border-red-500/50 text-red-400 bg-red-500/10" 
-                                    : "border-yellow-500/50 text-yellow-400 bg-yellow-500/10"
-                              }
-                            >
-                              {center.generalCondition}
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setSelectedCenter(center)}
-                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setEditingCenter(center)}
-                              className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            {userData?.role === "admin" && (
+            <>
+              <div className="rounded-lg border border-border/50 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-secondary/30 hover:bg-secondary/30">
+                        <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedCenters.map((center) => (
+                        <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              <Building className="h-4 w-4 text-muted-foreground" />
+                              {center.centerName}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {center.province}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">{center.territorialCommunity}</TableCell>
+                          <TableCell>
+                            {center.currentStatus && (
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  center.currentStatus === "مستغل" 
+                                    ? "border-green-500/50 text-green-600 bg-green-500/10" 
+                                    : center.currentStatus === "متوقف" 
+                                      ? "border-red-500/50 text-red-600 bg-red-500/10" 
+                                      : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
+                                }
+                              >
+                                {center.currentStatus}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {center.generalCondition && (
+                              <Badge 
+                                variant="outline"
+                                className={
+                                  center.generalCondition === "جيدة" 
+                                    ? "border-green-500/50 text-green-600 bg-green-500/10" 
+                                    : center.generalCondition === "متدهورة" 
+                                      ? "border-red-500/50 text-red-600 bg-red-500/10" 
+                                      : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
+                                }
+                              >
+                                {center.generalCondition}
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => setDeleteConfirm(center)}
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => setSelectedCenter(center)}
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
                               >
-                                <Trash2 className="h-4 w-4" />
+                                <Eye className="h-4 w-4" />
                               </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditingCenter(center)}
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              {userData?.role === "admin" && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeleteConfirm(center)}
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </div>
-            </div>
+
+              {/* Pagination */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t border-border/50">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>عرض</span>
+                  <Select 
+                    value={itemsPerPage.toString()} 
+                    onValueChange={(v) => setItemsPerPage(Number(v))}
+                  >
+                    <SelectTrigger className="w-[70px] h-8 bg-secondary/50 border-border/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                        <SelectItem key={option} value={option.toString()}>{option}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <span>من {filteredCenters.length} بناية</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">
+                    صفحة {currentPage} من {totalPages || 1}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      disabled={currentPage === 1}
+                      className="h-8 w-8"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="h-8 w-8"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
