@@ -1,5 +1,5 @@
 "use client";
-
+// Center form component with cascading location dropdowns
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -510,7 +510,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                     <SelectItem value="مستغل">مستغل</SelectItem>
                     <SelectItem value="متوقف">متوقف</SelectItem>
                     <SelectItem value="غير مستغل">غير مستغل</SelectItem>
-                    <SelectItem value="يحتاج تأهيل">يحتاج تأهيل</SelectItem>
+                    <SelectItem value="ي��تاج تأهيل">يحتاج تأهيل</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
