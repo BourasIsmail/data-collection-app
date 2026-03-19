@@ -379,8 +379,7 @@ export default function AdminUsersPage() {
                       </>
                     ) : (
                       "إنشاء المستخدم"
-                    )}
-                  </Button>
+)}
                 </form>
               </DialogContent>
             </Dialog>
