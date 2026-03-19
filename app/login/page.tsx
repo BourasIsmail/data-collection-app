@@ -49,7 +49,9 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/20 mb-4">
             <Building2 className="h-8 w-8 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">نظام إدارة المراكز</h1>
+          <h1 className="text-base font-bold text-foreground leading-relaxed max-w-md mx-auto">
+            منصة رقمية موجهة لجرد وتتبع المراكز الاجتماعية المُنجزة ضمن برامج المبادرة الوطنية للتنمية البشرية، سواء الخاضعة للإشراف المباشر لمصالح التعاون الوطني، أو المُدبَّرة في إطار شراكات مع جمعيات المجتمع المدني
+          </h1>
         </div>
 
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm shadow-2xl">
