@@ -37,10 +37,10 @@ export function StatsCards() {
 
   const stats = [
     {
-      title: "إجمالي البنايات",
+      title: "إجمالي المراكز",
       value: loading ? "-" : totalCenters,
       icon: Building2,
-      description: "بناية مسجلة في المنصة",
+      description: "مركز مسجل في المنصة",
       color: "text-primary",
       bgColor: "bg-primary/10"
     },
