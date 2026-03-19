@@ -189,29 +189,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
-              {/* الجماعة الترابية - on the right */}
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
-                <Select 
-                  value={formData.territorialCommunity} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
-                  disabled={!formData.province}
-                  required
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder={formData.province ? "اختر الجماعة الترابية" : "اختر الإقليم أولاً"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {availableCommunes.map((commune) => (
-                      <SelectItem key={commune} value={commune}>
-                        {commune}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* الإقليم أو العمالة - on the left */}
+              {/* الإقليم أو العمالة - on the right (first in RTL) */}
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">الإقليم أو العمالة <span className="text-destructive">*</span></label>
                 <Select 
@@ -234,6 +212,28 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                     {moroccoProvinces.map((province) => (
                       <SelectItem key={province.name} value={province.name}>
                         {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* الجماعة الترابية - on the left (second in RTL) */}
+              <div className="space-y-2 text-right">
+                <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
+                <Select 
+                  value={formData.territorialCommunity} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
+                  disabled={!formData.province}
+                  required
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder={formData.province ? "اختر الجماعة الترابية" : "اختر الإقليم أولاً"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {availableCommunes.map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
                       </SelectItem>
                     ))}
                   </SelectContent>
