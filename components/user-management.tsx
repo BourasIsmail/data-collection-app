@@ -12,8 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
-import { Plus, Trash2, Shield, User, AlertCircle } from "lucide-react";
-import { regions } from "@/lib/morocco-data";
+import { Plus, Trash2, Shield, User, AlertCircle, Users, Download } from "lucide-react";
+import { regions, getAllProvinces } from "@/lib/morocco-data";
 
 interface UserData {
   uid: string;
@@ -27,7 +27,11 @@ export function UserManagement() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0 });
+  const [createdAccounts, setCreatedAccounts] = useState<{ province: string; email: string; password: string }[]>([]);
   const [error, setError] = useState("");
   
   // New user form
@@ -112,6 +116,97 @@ export function UserManagement() {
     }
   };
 
+  // Generate a random password
+  const generatePassword = () => {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+    let password = "";
+    for (let i = 0; i < 12; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Transliterate Arabic province name to email-friendly format
+  const transliterateProvince = (name: string): string => {
+    const map: Record<string, string> = {
+      "ا": "a", "أ": "a", "إ": "i", "آ": "a", "ب": "b", "ت": "t", "ث": "th",
+      "ج": "j", "ح": "h", "خ": "kh", "د": "d", "ذ": "dh", "ر": "r", "ز": "z",
+      "س": "s", "ش": "sh", "ص": "s", "ض": "d", "ط": "t", "ظ": "z", "ع": "a",
+      "غ": "gh", "ف": "f", "ق": "q", "ك": "k", "ل": "l", "م": "m", "ن": "n",
+      "ه": "h", "و": "w", "ي": "y", "ى": "a", "ة": "a", "ء": "", "ئ": "y",
+      "ؤ": "w", " ": "-", "-": "-", "ـ": ""
+    };
+    
+    return name
+      .split("")
+      .map(char => map[char] || "")
+      .join("")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "")
+      .toLowerCase();
+  };
+
+  // Create accounts for all provinces
+  const handleBulkCreateAccounts = async () => {
+    const allProvinces = getAllProvinces();
+    const existingProvinces = new Set(users.filter(u => u.role === "user").map(u => u.province));
+    const provincesToCreate = allProvinces.filter(p => !existingProvinces.has(p.name));
+
+    if (provincesToCreate.length === 0) {
+      setError("جميع الأقاليم لديها حسابات بالفعل");
+      return;
+    }
+
+    setBulkCreating(true);
+    setBulkProgress({ current: 0, total: provincesToCreate.length });
+    setCreatedAccounts([]);
+    setError("");
+
+    const newAccounts: { province: string; email: string; password: string }[] = [];
+
+    for (let i = 0; i < provincesToCreate.length; i++) {
+      const province = provincesToCreate[i];
+      const email = `${transliterateProvince(province.name)}@entraide.ma`;
+      const password = generatePassword();
+
+      try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        
+        await setDoc(doc(db, "users", userCredential.user.uid), {
+          uid: userCredential.user.uid,
+          email: email,
+          displayName: province.name,
+          role: "user",
+          province: province.name
+        });
+
+        newAccounts.push({ province: province.name, email, password });
+        setBulkProgress({ current: i + 1, total: provincesToCreate.length });
+      } catch (err) {
+        console.error(`Error creating account for ${province.name}:`, err);
+        // Continue with other provinces even if one fails
+      }
+    }
+
+    setCreatedAccounts(newAccounts);
+    setBulkCreating(false);
+  };
+
+  // Download accounts as CSV
+  const downloadAccountsCSV = () => {
+    const BOM = "\uFEFF";
+    const headers = "الإقليم;البريد الإلكتروني;كلمة المرور";
+    const rows = createdAccounts.map(acc => `${acc.province};${acc.email};${acc.password}`);
+    const csvContent = BOM + [headers, ...rows].join("\n");
+    
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `province-accounts-${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -124,7 +219,112 @@ export function UserManagement() {
     <Card className="border-border/50">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">إدارة المستخدمين</CardTitle>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <div className="flex gap-2">
+          {/* Bulk Create Button */}
+          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
+                <Users className="h-4 w-4 ml-2" />
+                إنشاء حسابات الأقاليم
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>إنشاء حسابات لجميع الأقاليم</DialogTitle>
+                <DialogDescription>
+                  سيتم إنشاء حساب لكل إقليم ليس له حساب بعد
+                </DialogDescription>
+              </DialogHeader>
+              
+              {createdAccounts.length === 0 ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg text-sm text-amber-600">
+                    <p className="font-medium mb-2">ملاحظة:</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>سيتم إنشاء حساب لكل إقليم بشكل تلقائي</li>
+                      <li>البريد الإلكتروني: اسم-الإقليم@entraide.ma</li>
+                      <li>كلمة المرور: عشوائية (12 حرف)</li>
+                      <li>احفظ ملف CSV الذي سيتم تحميله بعد الإنشاء</li>
+                    </ul>
+                  </div>
+
+                  {bulkCreating && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>جاري الإنشاء...</span>
+                        <span>{bulkProgress.current} / {bulkProgress.total}</span>
+                      </div>
+                      <div className="w-full bg-secondary rounded-full h-2">
+                        <div 
+                          className="bg-primary h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="flex items-center gap-2 text-destructive text-sm p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{error}</span>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => setIsBulkDialogOpen(false)}>
+                      إلغاء
+                    </Button>
+                    <Button onClick={handleBulkCreateAccounts} disabled={bulkCreating}>
+                      {bulkCreating ? <Spinner className="h-4 w-4" /> : "بدء الإنشاء"}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-sm text-green-600">
+                    <p className="font-medium">تم إنشاء {createdAccounts.length} حساب بنجاح!</p>
+                  </div>
+                  
+                  <div className="max-h-60 overflow-y-auto border rounded-lg">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="bg-secondary/50">
+                          <TableHead className="text-right text-xs">الإقليم</TableHead>
+                          <TableHead className="text-right text-xs">البريد</TableHead>
+                          <TableHead className="text-right text-xs">كلمة المرور</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {createdAccounts.map((acc, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell className="text-xs py-2">{acc.province}</TableCell>
+                            <TableCell className="text-xs py-2 font-mono" dir="ltr">{acc.email}</TableCell>
+                            <TableCell className="text-xs py-2 font-mono" dir="ltr">{acc.password}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <Button variant="outline" onClick={() => {
+                      setCreatedAccounts([]);
+                      setIsBulkDialogOpen(false);
+                    }}>
+                      إغلاق
+                    </Button>
+                    <Button onClick={downloadAccountsCSV}>
+                      <Download className="h-4 w-4 ml-2" />
+                      تحميل CSV
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+
+          {/* Single User Create */}
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="bg-primary hover:bg-primary/90">
               <Plus className="h-4 w-4 ml-2" />
@@ -244,7 +444,8 @@ export function UserManagement() {
               </div>
             </form>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-border/50 overflow-hidden">
