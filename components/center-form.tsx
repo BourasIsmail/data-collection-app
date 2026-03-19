@@ -1,6 +1,5 @@
 "use client";
 
-// Center form component - uses <p> tag for description, not CardDescription
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,15 +8,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/spinner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Center } from "@/types/center";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { 
+  Center, 
+  SERVICE_TYPES, 
+  BUILDING_CONDITIONS, 
+  CENTER_MANAGEMENT_OPTIONS, 
+  LEGAL_STATUS_OPTIONS 
+} from "@/types/center";
 import { useAuth } from "@/contexts/auth-context";
 import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { CheckCircle } from "lucide-react";
 import { 
   provinces as moroccoProvinces, 
-  getDistrictsByProvince, 
-  getCommuneNames 
+  getCommunesByProvince 
 } from "@/lib/morocco-admin-divisions";
 
 interface CenterFormProps {
@@ -26,47 +32,23 @@ interface CenterFormProps {
 }
 
 const initialFormData = {
-  // أولًا - البيانات التعريفية
+  // البيانات الأساسية
   centerName: "",
-  socialProgram: "",
-  fullAddress: "",
-  territorialCommunity: "",
-  circle: "",
   province: "",
+  territorialCommunity: "",
+  fullAddress: "",
+  totalArea: "",
   
-  // ثانيًا - المعطيات الإدارية والقانونية
-  indhMortgage: "",
-  partnerAssociation: "",
+  // البيانات التصنيفية
+  buildingCondition: "",
+  servicesNature: [] as string[],
   centerManagement: "",
   legalStatus: "",
-  propertyReference: "",
-  servicesNature: "",
+  
+  // بيانات إضافية
+  partnerAssociation: "",
   beneficiaryCategories: "",
   monthlyBeneficiaries: "",
-  availableLegalDocuments: "",
-  
-  // ثالثًا - معطيات الإنجاز
-  completionYear: "",
-  operationStartDate: "",
-  currentStatus: "",
-  
-  // رابعًا - الوضعية التقنية للبناية
-  totalArea: "",
-  availableRooms: "",
-  generalCondition: "",
-  hasWater: false,
-  hasElectricity: false,
-  hasSanitation: false,
-  hasAccessibility: false,
-  technicalNotes: "",
-  
-  // سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني
-  proposedForHandover: false,
-  handoverJustification: "",
-  handoverDocuments: "",
-  handoverConstraints: "",
-  
-  // سابعًا - ملاحظات وتوصيات
   observations: ""
 };
 
@@ -78,8 +60,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
   
   const [formData, setFormData] = useState(initialFormData);
   
-  // Cascading dropdown states
-  const [availableDistricts, setAvailableDistricts] = useState<string[]>([]);
+  // Cascading dropdown state
   const [availableCommunes, setAvailableCommunes] = useState<string[]>([]);
 
   // Initialize form when editing or for user accounts
@@ -87,43 +68,22 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
     if (editCenter) {
       setFormData({
         centerName: editCenter.centerName || "",
-        socialProgram: editCenter.socialProgram || "",
-        fullAddress: editCenter.fullAddress || "",
-        territorialCommunity: editCenter.territorialCommunity || "",
-        circle: editCenter.circle || "",
         province: editCenter.province || "",
-        indhMortgage: editCenter.indhMortgage || "",
-        partnerAssociation: editCenter.partnerAssociation || "",
+        territorialCommunity: editCenter.territorialCommunity || "",
+        fullAddress: editCenter.fullAddress || "",
+        totalArea: editCenter.totalArea || "",
+        buildingCondition: editCenter.buildingCondition || "",
+        servicesNature: editCenter.servicesNature || [],
         centerManagement: editCenter.centerManagement || "",
         legalStatus: editCenter.legalStatus || "",
-        propertyReference: editCenter.propertyReference || "",
-        servicesNature: editCenter.servicesNature || "",
+        partnerAssociation: editCenter.partnerAssociation || "",
         beneficiaryCategories: editCenter.beneficiaryCategories || "",
         monthlyBeneficiaries: editCenter.monthlyBeneficiaries || "",
-        availableLegalDocuments: editCenter.availableLegalDocuments || "",
-        completionYear: editCenter.completionYear || "",
-        operationStartDate: editCenter.operationStartDate || "",
-        currentStatus: editCenter.currentStatus || "",
-        totalArea: editCenter.totalArea || "",
-        availableRooms: editCenter.availableRooms || "",
-        generalCondition: editCenter.generalCondition || "",
-        hasWater: editCenter.hasWater || false,
-        hasElectricity: editCenter.hasElectricity || false,
-        hasSanitation: editCenter.hasSanitation || false,
-        hasAccessibility: editCenter.hasAccessibility || false,
-        technicalNotes: editCenter.technicalNotes || "",
-        proposedForHandover: editCenter.proposedForHandover || false,
-        handoverJustification: editCenter.handoverJustification || "",
-        handoverDocuments: editCenter.handoverDocuments || "",
-        handoverConstraints: editCenter.handoverConstraints || "",
         observations: editCenter.observations || ""
       });
-      // Initialize cascading dropdowns for editing
+      // Initialize communes for editing
       if (editCenter.province) {
-        setAvailableDistricts(getDistrictsByProvince(editCenter.province));
-        if (editCenter.circle) {
-          setAvailableCommunes(getCommuneNames(editCenter.province, editCenter.circle));
-        }
+        setAvailableCommunes(getCommunesByProvince(editCenter.province));
       }
       setFormInitialized(true);
     } else if (userData?.role === "user" && userData.province) {
@@ -131,8 +91,8 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
         ...prev,
         province: userData.province
       }));
-      // Initialize districts for user's province
-      setAvailableDistricts(getDistrictsByProvince(userData.province));
+      // Initialize communes for user's province
+      setAvailableCommunes(getCommunesByProvince(userData.province));
       setFormInitialized(true);
     } else if (userData?.role === "admin") {
       setFormInitialized(true);
@@ -148,6 +108,15 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
       </Card>
     );
   }
+
+  const handleServiceToggle = (service: string) => {
+    setFormData(prev => ({
+      ...prev,
+      servicesNature: prev.servicesNature.includes(service)
+        ? prev.servicesNature.filter(s => s !== service)
+        : [...prev.servicesNature, service]
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -195,40 +164,80 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
   return (
     <Card className="w-full">
       <CardHeader className="text-right">
-        <CardTitle>{editCenter ? "تعديل بيانات البناية" : "إضافة بناية جديدة"}</CardTitle>
-<p className="text-sm text-muted-foreground">
-  {editCenter ? "قم بتعديل بيانات البناية" : "قم بملء جميع الحقول المطلوبة"}
-</p>
+        <CardTitle>{editCenter ? "تعديل بيانات المركز" : "إضافة مركز جديد"}</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          {editCenter ? "قم بتعديل بيانات المركز" : "قم بملء جميع الحقول المطلوبة"}
+        </p>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-8">
           
-          {/* أولًا - البيانات التعريفية */}
+          {/* البيانات الأساسية */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">أولًا - البيانات التعريفية</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">البيانات الأساسية</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2 text-right">
+              <label className="block text-sm font-medium">اسم المركز أو المركب الاجتماعي <span className="text-destructive">*</span></label>
+              <Input
+                value={formData.centerName}
+                onChange={(e) => setFormData(prev => ({ ...prev, centerName: e.target.value }))}
+                placeholder="أدخل اسم المركز أو المركب الاجتماعي"
+                className="text-right"
+                dir="rtl"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
+              {/* الإقليم أو العمالة - on the right (first in RTL) */}
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">اسم البناية أو المركز</label>
-                <Input
-                  value={formData.centerName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, centerName: e.target.value }))}
-                  placeholder="أدخل اسم البناية أو المركز"
-                  className="text-right"
-                  dir="rtl"
+                <label className="block text-sm font-medium">الإقليم أو العمالة <span className="text-destructive">*</span></label>
+                <Select 
+                  value={formData.province} 
+                  onValueChange={(v) => {
+                    setFormData(prev => ({ 
+                      ...prev, 
+                      province: v,
+                      territorialCommunity: "" // Reset commune
+                    }));
+                    setAvailableCommunes(getCommunesByProvince(v));
+                  }}
+                  disabled={isUserMode}
                   required
-                />
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder="اختر الإقليم أو العمالة" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {moroccoProvinces.map((province) => (
+                      <SelectItem key={province.name} value={province.name}>
+                        {province.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
+              {/* الجماعة الترابية - on the left (second in RTL) */}
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">البرنامج الاجتماعي الموجود بالمركز</label>
-                <Input
-                  value={formData.socialProgram}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialProgram: e.target.value }))}
-                  placeholder="أدخل البرنامج الاجتماعي"
-                  className="text-right"
-                  dir="rtl"
-                />
+                <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
+                <Select 
+                  value={formData.territorialCommunity} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
+                  disabled={!formData.province}
+                  required
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder={formData.province ? "اختر الجماعة الترابية" : "اختر الإقليم أولاً"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {availableCommunes.map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -244,211 +253,147 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* الجماعة الترابية - Commune (Third level) - Leftmost in RTL */}
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الجماعة الترابية</label>
-                <Select 
-                  value={formData.territorialCommunity} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
-                  disabled={!formData.circle}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder={formData.circle ? "اختر الجماعة الترابية" : "اختر القيادة أولاً"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {availableCommunes.map((commune) => (
-                      <SelectItem key={commune} value={commune}>
-                        {commune}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* القيادة / الدائرة - District (Second level) - Middle */}
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">القيادة / الدائرة</label>
-                <Select 
-                  value={formData.circle} 
-                  onValueChange={(v) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      circle: v,
-                      territorialCommunity: "" // Reset commune
-                    }));
-                    setAvailableCommunes(getCommuneNames(formData.province, v));
-                  }}
-                  disabled={!formData.province}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder={formData.province ? "اختر القيادة / الدائرة" : "اختر الإقليم أولاً"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {availableDistricts.map((district) => (
-                      <SelectItem key={district} value={district}>
-                        {district}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* الإقليم أو العمالة - Province (Top level) - Rightmost in RTL */}
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الإقليم أو العمالة</label>
-                <Select 
-                  value={formData.province} 
-                  onValueChange={(v) => {
-                    setFormData(prev => ({ 
-                      ...prev, 
-                      province: v,
-                      circle: "", // Reset child selections
-                      territorialCommunity: ""
-                    }));
-                    setAvailableDistricts(getDistrictsByProvince(v));
-                    setAvailableCommunes([]); // Reset communes
-                  }}
-                  disabled={isUserMode}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر الإقليم أو العمالة" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {moroccoProvinces.map((province) => (
-                      <SelectItem key={province.name} value={province.name}>
-                        {province.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-2 text-right">
+              <label className="block text-sm font-medium">المساحة الإجمالية للمركز أو المركب الاجتماعي بمتر مربع</label>
+              <Input
+                type="number"
+                value={formData.totalArea}
+                onChange={(e) => setFormData(prev => ({ ...prev, totalArea: e.target.value }))}
+                placeholder="أدخل المساحة بمتر مربع"
+                className="text-right"
+                dir="rtl"
+              />
             </div>
 
-            {/* Summary of selected location */}
-            {formData.province && formData.circle && formData.territorialCommunity && (
+            {/* Location summary */}
+            {formData.province && formData.territorialCommunity && (
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-right">
                 <p className="text-sm font-medium text-primary mb-2">الموقع المختار:</p>
                 <p className="text-sm">
                   <span className="font-medium">الإقليم:</span> {formData.province} | 
-                  <span className="font-medium"> القيادة/الدائرة:</span> {formData.circle} | 
                   <span className="font-medium"> الجماعة:</span> {formData.territorialCommunity}
                 </p>
               </div>
             )}
           </div>
 
-          {/* ثانيًا - المعطيات الإدارية والقانونية */}
+          {/* البيانات التصنيفية */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">ثانيًا - المعطيات الإدارية والقانونية</h3>
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">البيانات التصنيفية</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">هل البناية موضوع رهن إشارة التعاون الوطني من طرف INDH</label>
-                <Select 
-                  value={formData.indhMortgage} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, indhMortgage: v }))}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="نعم">نعم</SelectItem>
-                    <SelectItem value="لا">لا</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الشريك أو الجمعية المتواجدة بالمركز الاجتماعي</label>
-                <Input
-                  value={formData.partnerAssociation}
-                  onChange={(e) => setFormData(prev => ({ ...prev, partnerAssociation: e.target.value }))}
-                  placeholder="أدخل اسم الشريك أو الجمعية"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
+            {/* حالة البناية - Radio */}
+            <div className="space-y-3 text-right">
+              <label className="block text-sm font-medium">حالة البناية <span className="text-destructive">*</span></label>
+              <RadioGroup
+                value={formData.buildingCondition}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, buildingCondition: v }))}
+                className="flex flex-wrap gap-6 justify-end"
+              >
+                {BUILDING_CONDITIONS.map((condition) => (
+                  <div key={condition} className="flex items-center gap-2">
+                    <Label htmlFor={`condition-${condition}`} className="cursor-pointer">
+                      {condition}
+                    </Label>
+                    <RadioGroupItem value={condition} id={`condition-${condition}`} />
+                  </div>
+                ))}
+              </RadioGroup>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">تدبير المركز الاجتماعي</label>
-                <Select 
-                  value={formData.centerManagement} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر نوع التدبير" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="تدبير مباشر من التعاون الوطني">تدبير مباشر من التعاون الوطني</SelectItem>
-                    <SelectItem value="تدبير مفوض لجمعية">تدبير مفوض لجمعية</SelectItem>
-                    <SelectItem value="تدبير مشترك مع الجمعية">تدبير مشترك مع الجمعية</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* طبيعة الخدمات والأنشطة - Multi-checkbox */}
+            <div className="space-y-3 text-right">
+              <label className="block text-sm font-medium">طبيعة الخدمات والأنشطة</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 border rounded-lg bg-muted/20">
+                {SERVICE_TYPES.map((service) => (
+                  <div key={service} className="flex items-center gap-2 justify-end">
+                    <Label htmlFor={`service-${service}`} className="cursor-pointer text-sm">
+                      {service}
+                    </Label>
+                    <Checkbox
+                      id={`service-${service}`}
+                      checked={formData.servicesNature.includes(service)}
+                      onCheckedChange={() => handleServiceToggle(service)}
+                    />
+                  </div>
+                ))}
               </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الوضعية القانونية للعقار</label>
-                <Select 
-                  value={formData.legalStatus} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر الوضعية القانونية" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ملكية خاصة">ملكية خاصة</SelectItem>
-                    <SelectItem value="ملكية عمو��ية">ملكية عمومية</SelectItem>
-                    <SelectItem value="عقار مستأجر">عقار مستأجر</SelectItem>
-                    <SelectItem value="عقار موضوع نزاع قانوني">عقار موضوع نزاع قانوني</SelectItem>
-                    <SelectItem value="عقار موضوع تنازل أو هبة">عقار موضوع تنازل أو هبة</SelectItem>
-                    <SelectItem value="عقار بدون وضعية قانونية واضحة">عقار بدون وضعية قانونية واضحة</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              {formData.servicesNature.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  تم اختيار {formData.servicesNature.length} خدمة/نشاط
+                </p>
+              )}
             </div>
 
+            {/* الوضعية القانونية للعقار - Radio */}
+            <div className="space-y-3 text-right">
+              <label className="block text-sm font-medium">الوضعية القانونية للعقار <span className="text-destructive">*</span></label>
+              <RadioGroup
+                value={formData.legalStatus}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
+                className="flex flex-col gap-3 items-end"
+              >
+                {LEGAL_STATUS_OPTIONS.map((option) => (
+                  <div key={option} className="flex items-center gap-2">
+                    <Label htmlFor={`legal-${option}`} className="cursor-pointer">
+                      {option}
+                    </Label>
+                    <RadioGroupItem value={option} id={`legal-${option}`} />
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            {/* تدبير المركز - Radio */}
+            <div className="space-y-3 text-right">
+              <label className="block text-sm font-medium">تدبير المركز <span className="text-destructive">*</span></label>
+              <RadioGroup
+                value={formData.centerManagement}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
+                className="flex flex-col gap-3 items-end"
+              >
+                {CENTER_MANAGEMENT_OPTIONS.map((option) => (
+                  <div key={option} className="flex items-center gap-2">
+                    <Label htmlFor={`management-${option}`} className="cursor-pointer">
+                      {option}
+                    </Label>
+                    <RadioGroupItem value={option} id={`management-${option}`} />
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+          </div>
+
+          {/* بيانات إضافية */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">بيانات إضافية</h3>
+            
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">مراجع الرسم العقاري إن وجد</label>
+              <label className="block text-sm font-medium">الشريك أو الجمعية المتواجدة بالمركز الاجتماعي</label>
               <Input
-                value={formData.propertyReference}
-                onChange={(e) => setFormData(prev => ({ ...prev, propertyReference: e.target.value }))}
-                placeholder="أدخل مراجع الرسم العقاري"
+                value={formData.partnerAssociation}
+                onChange={(e) => setFormData(prev => ({ ...prev, partnerAssociation: e.target.value }))}
+                placeholder="أدخل اسم الشريك أو الجمعية"
                 className="text-right"
                 dir="rtl"
-              />
-            </div>
-
-            <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">طبيعة الخدمات والأنشطة المقدمة</label>
-              <Textarea
-                value={formData.servicesNature}
-                onChange={(e) => setFormData(prev => ({ ...prev, servicesNature: e.target.value }))}
-                placeholder="أدخل طبيعة الخدمات والأنشطة المقدمة"
-                className="text-right"
-                dir="rtl"
-                rows={3}
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">الفئات المستفيدة</label>
-                <Textarea
+                <Input
                   value={formData.beneficiaryCategories}
                   onChange={(e) => setFormData(prev => ({ ...prev, beneficiaryCategories: e.target.value }))}
                   placeholder="أدخل الفئات المستفيدة"
                   className="text-right"
                   dir="rtl"
-                  rows={2}
                 />
               </div>
 
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">العدد التقريبي للمستفيدين شهريًا</label>
+                <label className="block text-sm font-medium">معدل عدد المستفيدين شهريًا</label>
                 <Input
+                  type="number"
                   value={formData.monthlyBeneficiaries}
                   onChange={(e) => setFormData(prev => ({ ...prev, monthlyBeneficiaries: e.target.value }))}
                   placeholder="أدخل العدد التقريبي"
@@ -459,234 +404,11 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">الوثائق القانونية المتوفرة</label>
-              <Textarea
-                value={formData.availableLegalDocuments}
-                onChange={(e) => setFormData(prev => ({ ...prev, availableLegalDocuments: e.target.value }))}
-                placeholder="أدخل الوثائق القانونية المتوفرة"
-                className="text-right"
-                dir="rtl"
-                rows={2}
-              />
-            </div>
-          </div>
-
-          {/* ثالثًا - معطيات الإنجاز */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">ثالثًا - معطيات الإنجاز</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">سنة إنجاز المشروع</label>
-                <Input
-                  value={formData.completionYear}
-                  onChange={(e) => setFormData(prev => ({ ...prev, completionYear: e.target.value }))}
-                  placeholder="أدخل سنة الإنجاز"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">تاريخ الشروع في الاستغلال الفعلي</label>
-                <Input
-                  value={formData.operationStartDate}
-                  onChange={(e) => setFormData(prev => ({ ...prev, operationStartDate: e.target.value }))}
-                  placeholder="أدخل تاريخ الشروع في الاستغلال"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الوضعية الحالية</label>
-                <Select 
-                  value={formData.currentStatus} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, currentStatus: v }))}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر الوضعية الحالية" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="مستغل">مستغل</SelectItem>
-                    <SelectItem value="متوقف">متوقف</SelectItem>
-                    <SelectItem value="غير مستغل">غير مستغل</SelectItem>
-                    <SelectItem value="ي��تاج تأهيل">يحتاج تأهيل</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* رابعًا - الوضعية التقنية للبناية */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">رابعًا - الوضعية التقنية للبناية</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">المساحة الإجمالية (متر مربع)</label>
-                <Input
-                  value={formData.totalArea}
-                  onChange={(e) => setFormData(prev => ({ ...prev, totalArea: e.target.value }))}
-                  placeholder="أدخل المساحة الإجمالية"
-                  className="text-right"
-                  dir="rtl"
-                />
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الحالة العامة</label>
-                <Select 
-                  value={formData.generalCondition} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, generalCondition: v }))}
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder="اختر الحالة العامة" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="جيدة">جيدة</SelectItem>
-                    <SelectItem value="متوسطة">متوسطة</SelectItem>
-                    <SelectItem value="متدهورة">متدهورة</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">القاعا�� والمرافق المتوفرة</label>
-              <Textarea
-                value={formData.availableRooms}
-                onChange={(e) => setFormData(prev => ({ ...prev, availableRooms: e.target.value }))}
-                placeholder="أدخل القاعات والمرافق المتوفرة"
-                className="text-right"
-                dir="rtl"
-                rows={3}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2 justify-end">
-                <label htmlFor="hasWater" className="text-sm cursor-pointer">
-                  توفر الماء الصالح للشرب
-                </label>
-                <Checkbox
-                  id="hasWater"
-                  checked={formData.hasWater}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasWater: checked as boolean }))}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 justify-end">
-                <label htmlFor="hasElectricity" className="text-sm cursor-pointer">
-                  توفر الكهرباء
-                </label>
-                <Checkbox
-                  id="hasElectricity"
-                  checked={formData.hasElectricity}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasElectricity: checked as boolean }))}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 justify-end">
-                <label htmlFor="hasSanitation" className="text-sm cursor-pointer">
-                  توفر شبكة التطهير
-                </label>
-                <Checkbox
-                  id="hasSanitation"
-                  checked={formData.hasSanitation}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasSanitation: checked as boolean }))}
-                />
-              </div>
-
-              <div className="flex items-center gap-2 justify-end">
-                <label htmlFor="hasAccessibility" className="text-sm cursor-pointer">
-                  الولوجيات للأشخاص في وضعية إعاقة
-                </label>
-                <Checkbox
-                  id="hasAccessibility"
-                  checked={formData.hasAccessibility}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, hasAccessibility: checked as boolean }))}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">ملاحظات تقنية وأشغال التأهيل المطلوبة</label>
-              <Textarea
-                value={formData.technicalNotes}
-                onChange={(e) => setFormData(prev => ({ ...prev, technicalNotes: e.target.value }))}
-                placeholder="أدخل الملاحظات التقنية"
-                className="text-right"
-                dir="rtl"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          {/* سادسًا - وضعية التسليم */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني</h3>
-            
-            <div className="flex items-center gap-2 justify-end">
-              <label htmlFor="proposedForHandover" className="text-sm cursor-pointer">
-                هل البناية مقترحة للتسليم إلى التعاون الوطني؟
-              </label>
-              <Checkbox
-                id="proposedForHandover"
-                checked={formData.proposedForHandover}
-                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, proposedForHandover: checked as boolean }))}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">مبررات الاقتراح</label>
-                <Textarea
-                  value={formData.handoverJustification}
-                  onChange={(e) => setFormData(prev => ({ ...prev, handoverJustification: e.target.value }))}
-                  placeholder="أدخل مبررات الاقتراح"
-                  className="text-right"
-                  dir="rtl"
-                  rows={2}
-                />
-              </div>
-
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الوثائق المرفقة</label>
-                <Textarea
-                  value={formData.handoverDocuments}
-                  onChange={(e) => setFormData(prev => ({ ...prev, handoverDocuments: e.target.value }))}
-                  placeholder="أدخل الوثائق المرفقة"
-                  className="text-right"
-                  dir="rtl"
-                  rows={2}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">الإكراهات المحتملة</label>
-              <Textarea
-                value={formData.handoverConstraints}
-                onChange={(e) => setFormData(prev => ({ ...prev, handoverConstraints: e.target.value }))}
-                placeholder="أدخل الإكراهات المحتملة"
-                className="text-right"
-                dir="rtl"
-                rows={2}
-              />
-            </div>
-          </div>
-
-          {/* سابعًا - ملاحظات وتوصيات */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">سابعًا - ملاحظات وتوصيات</h3>
-            
-            <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">ملاحظات عام��</label>
+              <label className="block text-sm font-medium">ملاحظات</label>
               <Textarea
                 value={formData.observations}
                 onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
-                placeholder="أدخل الملاحظات والتوصيات"
+                placeholder="أدخل أي ملاحظات إضافية"
                 className="text-right"
                 dir="rtl"
                 rows={4}
@@ -695,21 +417,15 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
           </div>
 
           {/* Submit Button */}
-          <div className="flex items-center gap-4 pt-4 border-t justify-end">
+          <div className="flex justify-end gap-4 pt-4 border-t">
             {success && (
-              <div className="flex items-center gap-2 text-green-600">
-                <span>تم الحفظ بنجاح</span>
+              <div className="flex items-center gap-2 text-green-600 animate-in fade-in">
                 <CheckCircle className="h-5 w-5" />
+                <span>تم الحفظ بنجاح</span>
               </div>
             )}
-            <Button type="submit" disabled={loading} className="min-w-[150px]">
-              {loading ? (
-                <Spinner className="h-4 w-4" />
-              ) : editCenter ? (
-                "تحديث البيانات"
-              ) : (
-                "حفظ البناية"
-              )}
+            <Button type="submit" disabled={loading} className="min-w-[120px]">
+              {loading ? <Spinner className="h-4 w-4" /> : editCenter ? "تحديث البيانات" : "حفظ البيانات"}
             </Button>
           </div>
         </form>

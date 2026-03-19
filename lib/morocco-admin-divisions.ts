@@ -1620,7 +1620,7 @@ export const provinces: Province[] = [
         ]
       },
       {
-        name: "قيادة بومالن دادس",
+        name: "قيادة بومالن د��دس",
         communes: [
           { name: "بومالن دادس", type: "urban" },
           { name: "إمي ندونيت", type: "rural" },
@@ -2077,4 +2077,17 @@ export const getCommunesByDistrict = (provinceName: string, districtName: string
 
 export const getCommuneNames = (provinceName: string, districtName: string): string[] => {
   return getCommunesByDistrict(provinceName, districtName).map(c => c.name);
+};
+
+// Get all communes for a province (without district filter)
+export const getCommunesByProvince = (provinceName: string): string[] => {
+  const province = provinces.find(p => p.name === provinceName);
+  if (!province) return [];
+  const allCommunes: string[] = [];
+  province.districts.forEach(district => {
+    district.communes.forEach(commune => {
+      allCommunes.push(commune.name);
+    });
+  });
+  return allCommunes;
 };

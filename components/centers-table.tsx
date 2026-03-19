@@ -34,7 +34,6 @@ export function CentersTable() {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   
   // Filter state
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [conditionFilter, setConditionFilter] = useState<string>("all");
   const [provinceFilter, setProvinceFilter] = useState<string>("all");
 
@@ -81,17 +80,15 @@ export function CentersTable() {
     return centers.filter(center => {
       const matchesSearch = 
         center.centerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        center.socialProgram?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         center.province?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         center.territorialCommunity?.toLowerCase().includes(searchTerm.toLowerCase());
       
-      const matchesStatus = statusFilter === "all" || center.currentStatus === statusFilter;
-      const matchesCondition = conditionFilter === "all" || center.generalCondition === conditionFilter;
+      const matchesCondition = conditionFilter === "all" || center.buildingCondition === conditionFilter;
       const matchesProvince = provinceFilter === "all" || center.province === provinceFilter;
       
-      return matchesSearch && matchesStatus && matchesCondition && matchesProvince;
+      return matchesSearch && matchesCondition && matchesProvince;
     });
-  }, [centers, searchTerm, statusFilter, conditionFilter, provinceFilter]);
+  }, [centers, searchTerm, conditionFilter, provinceFilter]);
 
   // Pagination calculations
   const totalPages = Math.ceil(filteredCenters.length / itemsPerPage);
@@ -102,7 +99,7 @@ export function CentersTable() {
   // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, conditionFilter, provinceFilter, itemsPerPage]);
+  }, [searchTerm, conditionFilter, provinceFilter, itemsPerPage]);
 
   const handleDelete = async () => {
     if (!deleteConfirm?.id) return;
@@ -137,12 +134,11 @@ export function CentersTable() {
 
   const clearFilters = () => {
     setSearchTerm("");
-    setStatusFilter("all");
     setConditionFilter("all");
     setProvinceFilter("all");
   };
 
-  const hasActiveFilters = searchTerm || statusFilter !== "all" || conditionFilter !== "all" || provinceFilter !== "all";
+  const hasActiveFilters = searchTerm || conditionFilter !== "all" || provinceFilter !== "all";
 
   if (loading) {
     return (
@@ -167,17 +163,17 @@ export function CentersTable() {
                 <Building className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <CardTitle className="text-lg">قائمة البنايات</CardTitle>
+                <CardTitle className="text-lg">قائمة المراكز</CardTitle>
                 <CardDescription>
                   {userData?.role === "admin" 
-                    ? `جميع البنايات المسجلة`
-                    : `البنايات في إقليم ${userData?.province}`
+                    ? `جميع المراكز المسجلة`
+                    : `المراكز في إقليم ${userData?.province}`
                   }
                 </CardDescription>
               </div>
             </div>
             <Badge variant="secondary" className="text-primary bg-primary/10">
-              {filteredCenters.length} بناية
+              {filteredCenters.length} مركز
             </Badge>
           </div>
         </CardHeader>
@@ -205,7 +201,7 @@ export function CentersTable() {
               </Button>
               {hasActiveFilters && (
                 <span className="text-xs text-muted-foreground mr-2">
-                  (سيتم تصدير {filteredCenters.length} من {centers.length} بناية حسب الفلاتر المطبقة)
+                  (سيتم تصدير {filteredCenters.length} من {centers.length} مركز حسب الفلاتر المطبقة)
                 </span>
               )}
             </div>
@@ -217,7 +213,7 @@ export function CentersTable() {
               <div className="relative flex-1">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="بحث بالاسم أو البرنامج أو الإقليم..."
+                  placeholder="بحث بالاسم أو الإقليم أو الجماعة..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pr-10 bg-secondary/50 border-border/50 focus:border-primary"
@@ -241,23 +237,10 @@ export function CentersTable() {
                 </Select>
               )}
 
-              {/* Status Filter */}
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[160px] bg-secondary/50 border-border/50">
-                  <SelectValue placeholder="الوضعية" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل الوضعيات</SelectItem>
-                  <SelectItem value="مستغل">مستغل</SelectItem>
-                  <SelectItem value="متوقف">متوقف</SelectItem>
-                  <SelectItem value="في طور الإنجاز">في طور الإنجاز</SelectItem>
-                </SelectContent>
-              </Select>
-
               {/* Condition Filter */}
               <Select value={conditionFilter} onValueChange={setConditionFilter}>
                 <SelectTrigger className="w-[160px] bg-secondary/50 border-border/50">
-                  <SelectValue placeholder="الحالة العامة" />
+                  <SelectValue placeholder="حالة البناية" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">كل الحالات</SelectItem>
@@ -281,9 +264,9 @@ export function CentersTable() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-secondary/50 mb-4">
                 <FileText className="h-8 w-8 text-muted-foreground" />
               </div>
-              <p className="text-muted-foreground">لا توجد بنايات مسجلة</p>
+              <p className="text-muted-foreground">لا توجد مراكز مسجلة</p>
               <p className="text-sm text-muted-foreground/70 mt-1">
-                {hasActiveFilters ? "جرب تغيير معايير البحث أو الفلاتر" : "قم بإضافة بناية جديدة للبدء"}
+                {hasActiveFilters ? "جرب تغيير معايير البحث أو الفلاتر" : "قم بإضافة مركز جديد للبدء"}
               </p>
             </div>
           ) : (
@@ -293,18 +276,18 @@ export function CentersTable() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-secondary/30 hover:bg-secondary/30">
-                        <TableHead className="text-right font-semibold text-foreground">اسم البناية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">اسم المركز</TableHead>
                         <TableHead className="text-right font-semibold text-foreground">الإقليم</TableHead>
                         <TableHead className="text-right font-semibold text-foreground">الجماعة الترابية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الوضعية الحالية</TableHead>
-                        <TableHead className="text-right font-semibold text-foreground">الحالة العامة</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">حالة البناية</TableHead>
+                        <TableHead className="text-right font-semibold text-foreground">تدبير المركز</TableHead>
                         <TableHead className="text-right font-semibold text-foreground">الإجراءات</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {paginatedCenters.map((center) => (
                         <TableRow key={center.id} className="border-border/50 hover:bg-secondary/20">
-                          {/* اسم البناية */}
+                          {/* اسم المركز */}
                           <TableCell className="font-medium text-right">
                             <div className="flex items-center gap-2 justify-end">
                               <Building className="h-4 w-4 text-muted-foreground" />
@@ -320,39 +303,26 @@ export function CentersTable() {
                           </TableCell>
                           {/* الجماعة الترابية */}
                           <TableCell className="text-muted-foreground text-right">{center.territorialCommunity || "-"}</TableCell>
-                          {/* الوضعية الحالية */}
+                          {/* حالة البناية */}
                           <TableCell className="text-right">
-                            {center.currentStatus && (
+                            {center.buildingCondition && (
                               <Badge 
                                 variant="outline"
                                 className={
-                                  center.currentStatus === "مستغل" 
+                                  center.buildingCondition === "جيدة" 
                                     ? "border-green-500/50 text-green-600 bg-green-500/10" 
-                                    : center.currentStatus === "متوقف" 
+                                    : center.buildingCondition === "متدهورة" 
                                       ? "border-red-500/50 text-red-600 bg-red-500/10" 
                                       : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
                                 }
                               >
-                                {center.currentStatus}
+                                {center.buildingCondition}
                               </Badge>
                             )}
                           </TableCell>
-                          {/* الحالة العامة */}
-                          <TableCell className="text-right">
-                            {center.generalCondition && (
-                              <Badge 
-                                variant="outline"
-                                className={
-                                  center.generalCondition === "جيدة" 
-                                    ? "border-green-500/50 text-green-600 bg-green-500/10" 
-                                    : center.generalCondition === "متدهورة" 
-                                      ? "border-red-500/50 text-red-600 bg-red-500/10" 
-                                      : "border-yellow-500/50 text-yellow-600 bg-yellow-500/10"
-                                }
-                              >
-                                {center.generalCondition}
-                              </Badge>
-                            )}
+                          {/* تدبير المركز */}
+                          <TableCell className="text-muted-foreground text-right text-sm">
+                            {center.centerManagement || "-"}
                           </TableCell>
                           {/* الإجراءات */}
                           <TableCell className="text-right">
@@ -409,7 +379,7 @@ export function CentersTable() {
                       ))}
                     </SelectContent>
                   </Select>
-                  <span>من {filteredCenters.length} بناية</span>
+                  <span>من {filteredCenters.length} مركز</span>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -449,76 +419,53 @@ export function CentersTable() {
           <DialogHeader className="border-b border-border/50 pb-4">
             <DialogTitle className="flex items-center gap-2">
               <Building className="h-5 w-5 text-primary" />
-              تفاصيل البناية
+              تفاصيل المركز
             </DialogTitle>
             <DialogDescription>{selectedCenter?.centerName}</DialogDescription>
           </DialogHeader>
           {selectedCenter && (
             <div className="space-y-6 pt-2">
-              {/* أولًا - البيانات التعريفية */}
-              <SectionCard title="أولًا - البيانات التعريفية">
+              {/* البيانات الأساسية */}
+              <SectionCard title="البيانات الأساسية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <DetailItem label="اسم البناية أو المركز" value={selectedCenter.centerName} />
-                  <DetailItem label="البرنامج الاجتماعي الموجود بالمركز" value={selectedCenter.socialProgram} />
-                  <DetailItem label="العنوان الكامل" value={selectedCenter.fullAddress} className="md:col-span-2" />
-                  <DetailItem label="الجماعة الترابية" value={selectedCenter.territorialCommunity} />
-                  <DetailItem label="القيادة / الدائرة" value={selectedCenter.circle} />
+                  <DetailItem label="اسم المركز أو المركب الاجتماعي" value={selectedCenter.centerName} className="md:col-span-2" />
                   <DetailItem label="الإقليم أو العمالة" value={selectedCenter.province} />
+                  <DetailItem label="الجماعة الترابية" value={selectedCenter.territorialCommunity} />
+                  <DetailItem label="العنوان الكامل" value={selectedCenter.fullAddress} className="md:col-span-2" />
+                  <DetailItem label="المساحة الإجمالية (م²)" value={selectedCenter.totalArea} />
                 </div>
               </SectionCard>
 
-              {/* ثانيًا - المعطيات الإدارية والقانونية */}
-              <SectionCard title="ثانيًا - المعطيات الإدارية والقانونية">
+              {/* البيانات التصنيفية */}
+              <SectionCard title="البيانات التصنيفية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <DetailItem label="هل البناية موضوع رهن إشارة التعاون الوطني من طرف INDH" value={selectedCenter.indhMortgage} className="md:col-span-2" />
-                  <DetailItem label="الشريك أو الجمعية المتواجدة بالمركز الاجتماعي" value={selectedCenter.partnerAssociation} className="md:col-span-2" />
-                  <DetailItem label="تدبير المركز الاجتماعي" value={selectedCenter.centerManagement} />
-                  <DetailItem label="الوضعية القانونية للعقار" value={selectedCenter.legalStatus} />
-                  <DetailItem label="مراجع الرسم العقاري إن وجد" value={selectedCenter.propertyReference} className="md:col-span-2" />
-                  <DetailItem label="طبيعة الخدمات والأنشطة المقدمة" value={selectedCenter.servicesNature} className="md:col-span-2" />
-                  <DetailItem label="الفئات المستفيدة" value={selectedCenter.beneficiaryCategories} className="md:col-span-2" />
-                  <DetailItem label="العدد التقريبي للمستفيدين شهريًا" value={selectedCenter.monthlyBeneficiaries} />
-                  <DetailItem label="الوثائق القانونية المتوفرة" value={selectedCenter.availableLegalDocuments} className="md:col-span-2" />
+                  <DetailItem label="حالة البناية" value={selectedCenter.buildingCondition} />
+                  <DetailItem label="تدبير المركز" value={selectedCenter.centerManagement} />
+                  <DetailItem label="الوضعية القانونية للعقار" value={selectedCenter.legalStatus} className="md:col-span-2" />
+                  <div className="md:col-span-2 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">طبيعة الخدمات والأنشطة</p>
+                    {Array.isArray(selectedCenter.servicesNature) && selectedCenter.servicesNature.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedCenter.servicesNature.map((service, idx) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {service}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-foreground">-</p>
+                    )}
+                  </div>
                 </div>
               </SectionCard>
 
-              {/* ثالثًا - معطيات الإنجاز */}
-              <SectionCard title="ثالثًا - معطيات الإنجاز">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <DetailItem label="سنة إنجاز المشروع" value={selectedCenter.completionYear} />
-                  <DetailItem label="تاريخ الشروع في الاستغلال الفعلي" value={selectedCenter.operationStartDate} />
-                  <DetailItem label="الوضعية الحالية" value={selectedCenter.currentStatus} />
-                </div>
-              </SectionCard>
-
-              {/* رابعًا - الوضعية التقنية للبناية */}
-              <SectionCard title="رابعًا - الوضعية التقنية للبناية">
+              {/* بيانات إضافية */}
+              <SectionCard title="بيانات إضافية">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <DetailItem label="المساحة الإجمالية (متر مربع)" value={selectedCenter.totalArea} />
-                  <DetailItem label="الحالة العامة" value={selectedCenter.generalCondition} />
-                  <DetailItem label="القاعات والمرافق المتوفرة" value={selectedCenter.availableRooms} className="md:col-span-2" />
-                  <DetailItem label="توفر الماء الصالح للشرب" value={selectedCenter.hasWater ? "نعم" : "لا"} />
-                  <DetailItem label="توفر الكهرباء" value={selectedCenter.hasElectricity ? "نعم" : "لا"} />
-                  <DetailItem label="توفر شبكة التطهير" value={selectedCenter.hasSanitation ? "نعم" : "لا"} />
-                  <DetailItem label="الولوجيات للأشخاص في وضعية إعاقة" value={selectedCenter.hasAccessibility ? "نعم" : "لا"} />
-                  <DetailItem label="ملاحظات تقنية وأشغال التأهيل المطلوبة" value={selectedCenter.technicalNotes} className="md:col-span-2" />
-                </div>
-              </SectionCard>
-
-              {/* سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني */}
-              <SectionCard title="سادسًا - وضعية التسليم إلى مؤسسة التعاون الوطني">
-                <div className="grid grid-cols-1 gap-4">
-                  <DetailItem label="هل تم اقتراح البناية للتسليم" value={selectedCenter.proposedForHandover ? "نعم" : "لا"} />
-                  <DetailItem label="مبررات وأهداف التسليم" value={selectedCenter.handoverJustification} />
-                  <DetailItem label="الوثائق المتوفرة قصد التسليم" value={selectedCenter.handoverDocuments} />
-                  <DetailItem label="النواقص أو الإكراهات المسجلة" value={selectedCenter.handoverConstraints} />
-                </div>
-              </SectionCard>
-
-              {/* سابعًا - ملاحظات وتوصيات */}
-              <SectionCard title="سابعًا - ملاحظات وتوصيات">
-                <div className="grid grid-cols-1 gap-4">
-                  <DetailItem label="ملاحظات وتوصيات" value={selectedCenter.observations} />
+                  <DetailItem label="الشريك أو الجمعية المتواجدة بالمركز" value={selectedCenter.partnerAssociation} className="md:col-span-2" />
+                  <DetailItem label="الفئات المستفيدة" value={selectedCenter.beneficiaryCategories} />
+                  <DetailItem label="معدل عدد المستفيدين شهريًا" value={selectedCenter.monthlyBeneficiaries} />
+                  <DetailItem label="ملاحظات" value={selectedCenter.observations} className="md:col-span-2" />
                 </div>
               </SectionCard>
             </div>
@@ -532,9 +479,9 @@ export function CentersTable() {
           <DialogHeader className="border-b border-border/50 pb-4">
             <DialogTitle className="flex items-center gap-2">
               <Edit className="h-5 w-5 text-primary" />
-              تعديل البناية
+              تعديل المركز
             </DialogTitle>
-            <DialogDescription>قم بتعديل بيانات البناية {editingCenter?.centerName}</DialogDescription>
+            <DialogDescription>قم بتعديل بيانات المركز {editingCenter?.centerName}</DialogDescription>
           </DialogHeader>
           <CenterForm 
             editCenter={editingCenter} 
@@ -549,7 +496,7 @@ export function CentersTable() {
           <DialogHeader>
             <DialogTitle className="text-destructive">تأكيد الحذف</DialogTitle>
             <DialogDescription>
-              هل أنت متأكد من حذف البناية "{deleteConfirm?.centerName}"؟ لا يمكن التراجع عن هذا الإجراء.
+              هل أنت متأكد من حذف المركز "{deleteConfirm?.centerName}"؟ لا يمكن التراجع عن هذا الإجراء.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
@@ -575,7 +522,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
   );
 }
 
-function DetailItem({ label, value, className = "" }: { label: string; value: string; className?: string }) {
+function DetailItem({ label, value, className = "" }: { label: string; value?: string; className?: string }) {
   return (
     <div className={`space-y-1 ${className}`}>
       <p className="text-xs font-medium text-muted-foreground">{label}</p>
