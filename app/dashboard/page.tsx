@@ -110,8 +110,10 @@ export default function DashboardPage() {
                 <Building2 className="h-5 w-5 text-primary" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-foreground">نظام إدارة المراكز</h1>
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <h1 className="text-sm font-bold text-foreground leading-tight max-w-xl">
+                  منصة رقمية موجهة لجرد وتتبع المراكز الاجتماعية المُنجزة ضمن برامج المبادرة الوطنية للتنمية البشرية
+                </h1>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
                   {isAdmin ? (
                     <>
                       <Shield className="h-3 w-3 text-primary" />

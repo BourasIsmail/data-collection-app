@@ -328,7 +328,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             <div className="space-y-3 text-right">
               <label className="block text-sm font-medium">الوضعية القانونية للعقار <span className="text-destructive">*</span></label>
               <RadioGroup
-                value={formData.legalStatus}
+                value={formData.legalStatus.startsWith("آخر") ? "آخر" : formData.legalStatus}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
                 className="flex flex-col gap-3 items-end"
               >
@@ -341,6 +341,20 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   </div>
                 ))}
               </RadioGroup>
+              {(formData.legalStatus === "آخر" || formData.legalStatus.startsWith("آخر :")) && (
+                <div className="mt-2">
+                  <Input
+                    value={formData.legalStatus.startsWith("آخر :") ? formData.legalStatus.replace("آخر : ", "") : ""}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      legalStatus: e.target.value ? `آخر : ${e.target.value}` : "آخر"
+                    }))}
+                    placeholder="حدد الوضعية القانونية"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+              )}
             </div>
 
             {/* تدبير المركز - Radio */}
