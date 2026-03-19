@@ -1620,7 +1620,7 @@ export const provinces: Province[] = [
         ]
       },
       {
-        name: "قيادة بومالن د��دس",
+        name: "قيادة بومالن د����دس",
         communes: [
           { name: "بومالن دادس", type: "urban" },
           { name: "إمي ندونيت", type: "rural" },
@@ -2052,6 +2052,84 @@ export const provinces: Province[] = [
           { name: "الكويرة", type: "rural" },
           { name: "أكطي الغازي", type: "rural" },
           { name: "زوك", type: "rural" },
+        ]
+      }
+    ]
+  },
+  // عمالات الدار البيضاء
+  {
+    name: "عين الشق",
+    districts: [
+      {
+        name: "عين الشق",
+        communes: [
+          { name: "عين الشق", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "عين السبع",
+    districts: [
+      {
+        name: "عين السبع",
+        communes: [
+          { name: "عين السبع", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "بن مسيك",
+    districts: [
+      {
+        name: "بن مسيك",
+        communes: [
+          { name: "بن مسيك", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "الحي الحسني",
+    districts: [
+      {
+        name: "الحي الحسني",
+        communes: [
+          { name: "الحي الحسني", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "مرس السلطان",
+    districts: [
+      {
+        name: "مرس السلطان",
+        communes: [
+          { name: "مرس السلطان", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "مولاي رشيد",
+    districts: [
+      {
+        name: "مولاي رشيد",
+        communes: [
+          { name: "مولاي رشيد", type: "urban" },
+        ]
+      }
+    ]
+  },
+  {
+    name: "سيدي البرنوصي",
+    districts: [
+      {
+        name: "سيدي البرنوصي",
+        communes: [
+          { name: "سيدي البرنوصي", type: "urban" },
         ]
       }
     ]
