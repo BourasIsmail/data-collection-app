@@ -40,6 +40,10 @@ export default function AdminUsersPage() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("user");
   const [province, setProvince] = useState("");
+  const [bulkCreating, setBulkCreating] = useState(false);
+  const [bulkPassword, setBulkPassword] = useState("");
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ created: 0, failed: 0, total: 0 });
 
   useEffect(() => {
     if (!loading && (!user || userData?.role !== "admin")) {
@@ -100,6 +104,77 @@ export default function AdminUsersPage() {
     }
   };
 
+  const handleBulkCreateUsers = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!bulkPassword || bulkPassword.length < 6) {
+      setError("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+
+    setBulkCreating(true);
+    setError("");
+    setSuccess("");
+
+    // Get provinces that don't have users yet
+    const existingProvinces = users.filter(u => u.province).map(u => u.province);
+    const provincesToCreate = moroccoProvinces.filter(p => !existingProvinces.includes(p.name));
+    
+    setBulkProgress({ created: 0, failed: 0, total: provincesToCreate.length });
+
+    if (provincesToCreate.length === 0) {
+      setError("جميع الأقاليم لديها حسابات بالفعل");
+      setBulkCreating(false);
+      return;
+    }
+
+    // Create users in batches to avoid timeout
+    const batchSize = 10;
+    let totalCreated = 0;
+    let totalFailed = 0;
+
+    for (let i = 0; i < provincesToCreate.length; i += batchSize) {
+      const batch = provincesToCreate.slice(i, i + batchSize);
+      
+      for (const prov of batch) {
+        try {
+          // Generate email from province name (transliterate Arabic to simple format)
+          const emailPrefix = prov.name
+            .replace(/[\s\-]/g, "")
+            .toLowerCase();
+          const email = `${emailPrefix}@entraide.ma`;
+
+          // Create user in Firebase Auth
+          const userCredential = await createUserWithEmailAndPassword(auth, email, bulkPassword);
+          const newUser = userCredential.user;
+
+          // Create user document in Firestore
+          await setDoc(doc(db, "users", newUser.uid), {
+            email: email,
+            role: "user",
+            province: prov.name,
+            createdAt: new Date()
+          });
+
+          totalCreated++;
+        } catch (err) {
+          console.error(`Failed to create user for ${prov.name}:`, err);
+          totalFailed++;
+        }
+        
+        setBulkProgress({ 
+          created: totalCreated, 
+          failed: totalFailed, 
+          total: provincesToCreate.length 
+        });
+      }
+    }
+
+    setSuccess(`تم إنشاء ${totalCreated} مستخدم بنجاح${totalFailed > 0 ? ` (فشل ${totalFailed})` : ""}`);
+    setBulkCreating(false);
+    setIsBulkDialogOpen(false);
+    setBulkPassword("");
+  };
+
   const handleDeleteUser = async (userId: string, userEmail: string) => {
     if (!confirm(`هل أنت متأكد من حذف المستخدم ${userEmail}؟`)) return;
     
@@ -146,13 +221,89 @@ export default function AdminUsersPage() {
               </div>
             </div>
             
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 ml-2" />
-                  إضافة مستخدم
-                </Button>
-              </DialogTrigger>
+            <div className="flex items-center gap-2">
+              {/* Bulk Create Dialog */}
+              <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Users className="h-4 w-4 ml-2" />
+                    إنشاء كل الأقاليم
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md" dir="rtl">
+                  <DialogHeader>
+                    <DialogTitle className="text-right">إنشاء حسابات لجميع الأقاليم</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleBulkCreateUsers} className="space-y-4">
+                    <p className="text-sm text-muted-foreground">
+                      سيتم إنشاء حساب لكل إقليم لا يملك حساباً بعد. 
+                      البريد الإلكتروني سيكون بصيغة: اسم_الإقليم@entraide.ma
+                    </p>
+                    
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">كلمة المرور الموحدة لجميع الحسابات</label>
+                      <Input
+                        type="password"
+                        value={bulkPassword}
+                        onChange={(e) => setBulkPassword(e.target.value)}
+                        placeholder="أدخل كلمة مرور موحدة"
+                        required
+                        minLength={6}
+                        dir="ltr"
+                        className="text-left"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        يجب أن تكون 6 أحرف على الأقل
+                      </p>
+                    </div>
+
+                    {bulkCreating && (
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>جاري الإنشاء...</span>
+                          <span>{bulkProgress.created + bulkProgress.failed} / {bulkProgress.total}</span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2">
+                          <div 
+                            className="bg-primary h-2 rounded-full transition-all"
+                            style={{ width: `${((bulkProgress.created + bulkProgress.failed) / bulkProgress.total) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          تم إنشاء {bulkProgress.created} | فشل {bulkProgress.failed}
+                        </p>
+                      </div>
+                    )}
+
+                    {error && (
+                      <p className="text-sm text-destructive">{error}</p>
+                    )}
+
+                    <Button type="submit" className="w-full" disabled={bulkCreating}>
+                      {bulkCreating ? (
+                        <>
+                          <Loader2 className="h-4 w-4 ml-2 animate-spin" />
+                          جاري الإنشاء...
+                        </>
+                      ) : (
+                        <>
+                          <Users className="h-4 w-4 ml-2" />
+                          إنشاء جميع الحسابات
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                </DialogContent>
+              </Dialog>
+
+              {/* Single User Dialog */}
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="h-4 w-4 ml-2" />
+                    إضافة مستخدم
+                  </Button>
+                </DialogTrigger>
               <DialogContent className="sm:max-w-md" dir="rtl">
                 <DialogHeader>
                   <DialogTitle className="text-right">إنشاء مستخدم جديد</DialogTitle>
@@ -228,11 +379,11 @@ export default function AdminUsersPage() {
                       </>
                     ) : (
                       "إنشاء المستخدم"
-                    )}
-                  </Button>
+)}
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
         </div>
       </header>
