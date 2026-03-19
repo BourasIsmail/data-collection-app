@@ -62,7 +62,7 @@ export const CENTER_MANAGEMENT_OPTIONS = [
 export const LEGAL_STATUS_OPTIONS = [
   "ملكية خاصة",
   "ملكية عمومية",
-  "عقار مستأجر",
   "عقار موضوع نزاع قانوني",
-  "عقار بدون وضعية قانونية واضحة"
+  "بدون وضعية قانونية واضحة",
+  "آخر"
 ] as const;

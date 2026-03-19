@@ -188,8 +188,30 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* الإقليم أو العمالة */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4" dir="rtl">
+              {/* الجماعة الترابية - on the right */}
+              <div className="space-y-2 text-right">
+                <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
+                <Select 
+                  value={formData.territorialCommunity} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
+                  disabled={!formData.province}
+                  required
+                >
+                  <SelectTrigger className="w-full text-right" dir="rtl">
+                    <SelectValue placeholder={formData.province ? "اختر الجماعة الترابية" : "اختر الإقليم أولاً"} />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    {availableCommunes.map((commune) => (
+                      <SelectItem key={commune} value={commune}>
+                        {commune}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* الإقليم أو العمالة - on the left */}
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">الإقليم أو العمالة <span className="text-destructive">*</span></label>
                 <Select 
@@ -212,28 +234,6 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                     {moroccoProvinces.map((province) => (
                       <SelectItem key={province.name} value={province.name}>
                         {province.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* الجماعة الترابية */}
-              <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
-                <Select 
-                  value={formData.territorialCommunity} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
-                  disabled={!formData.province}
-                  required
-                >
-                  <SelectTrigger className="w-full text-right" dir="rtl">
-                    <SelectValue placeholder={formData.province ? "اختر الجماعة الترابية" : "اختر الإقليم أولاً"} />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    {availableCommunes.map((commune) => (
-                      <SelectItem key={commune} value={commune}>
-                        {commune}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -287,11 +287,11 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               <RadioGroup
                 value={formData.buildingCondition}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, buildingCondition: v }))}
-                className="flex flex-wrap gap-4 justify-end"
+                className="flex flex-wrap gap-6 justify-end"
                 dir="rtl"
               >
                 {BUILDING_CONDITIONS.map((condition) => (
-                  <div key={condition} className="flex items-center gap-2">
+                  <div key={condition} className="flex items-center gap-2 flex-row-reverse">
                     <Label htmlFor={`condition-${condition}`} className="cursor-pointer">
                       {condition}
                     </Label>
@@ -325,41 +325,41 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               )}
             </div>
 
-            {/* تدبير المركز - Radio */}
-            <div className="space-y-3 text-right">
-              <label className="block text-sm font-medium">تدبير المركز <span className="text-destructive">*</span></label>
-              <RadioGroup
-                value={formData.centerManagement}
-                onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
-                className="flex flex-col gap-3"
-                dir="rtl"
-              >
-                {CENTER_MANAGEMENT_OPTIONS.map((option) => (
-                  <div key={option} className="flex items-center gap-2 justify-end">
-                    <Label htmlFor={`management-${option}`} className="cursor-pointer">
-                      {option}
-                    </Label>
-                    <RadioGroupItem value={option} id={`management-${option}`} />
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
-
             {/* الوضعية القانونية للعقار - Radio */}
             <div className="space-y-3 text-right">
               <label className="block text-sm font-medium">الوضعية القانونية للعقار <span className="text-destructive">*</span></label>
               <RadioGroup
                 value={formData.legalStatus}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
-                className="flex flex-col gap-3"
+                className="flex flex-col gap-3 items-end"
                 dir="rtl"
               >
                 {LEGAL_STATUS_OPTIONS.map((option) => (
-                  <div key={option} className="flex items-center gap-2 justify-end">
+                  <div key={option} className="flex items-center gap-2 flex-row-reverse">
                     <Label htmlFor={`legal-${option}`} className="cursor-pointer">
                       {option}
                     </Label>
                     <RadioGroupItem value={option} id={`legal-${option}`} />
+                  </div>
+                ))}
+              </RadioGroup>
+            </div>
+
+            {/* تدبير المركز - Radio */}
+            <div className="space-y-3 text-right">
+              <label className="block text-sm font-medium">تدبير المركز <span className="text-destructive">*</span></label>
+              <RadioGroup
+                value={formData.centerManagement}
+                onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
+                className="flex flex-col gap-3 items-end"
+                dir="rtl"
+              >
+                {CENTER_MANAGEMENT_OPTIONS.map((option) => (
+                  <div key={option} className="flex items-center gap-2 flex-row-reverse">
+                    <Label htmlFor={`management-${option}`} className="cursor-pointer">
+                      {option}
+                    </Label>
+                    <RadioGroupItem value={option} id={`management-${option}`} />
                   </div>
                 ))}
               </RadioGroup>
