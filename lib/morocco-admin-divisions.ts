@@ -2133,6 +2133,17 @@ export const provinces: Province[] = [
         ]
       }
     ]
+  },
+  {
+    name: "شتوكة آيت باها",
+    districts: [
+      {
+        name: "شتوكة آيت باها",
+        communes: [
+          { name: "شتوكة آيت باها", type: "rural" },
+        ]
+      }
+    ]
   }
 ];
 
