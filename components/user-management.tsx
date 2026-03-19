@@ -12,9 +12,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
 import { Spinner } from "@/components/ui/spinner";
-import { Plus, Trash2, Shield, User, AlertCircle, Users } from "lucide-react";
-import { regions, getAllProvinces } from "@/lib/morocco-data";
-import { Progress } from "@/components/ui/progress";
+import { Plus, Trash2, Shield, User, AlertCircle } from "lucide-react";
+import { regions } from "@/lib/morocco-data";
 
 interface UserData {
   uid: string;
@@ -28,11 +27,7 @@ export function UserManagement() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [bulkCreating, setBulkCreating] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState(0);
-  const [bulkStatus, setBulkStatus] = useState("");
   const [error, setError] = useState("");
   
   // New user form
@@ -107,56 +102,6 @@ export function UserManagement() {
     }
   };
 
-  const handleBulkCreateUsers = async () => {
-    setBulkCreating(true);
-    setBulkProgress(0);
-    setBulkStatus("");
-    setError("");
-
-    const allProvinces = getAllProvinces();
-    const existingProvinces = new Set(users.filter(u => u.province).map(u => u.province));
-    const provincesToCreate = allProvinces.filter(p => !existingProvinces.has(p.name));
-
-    if (provincesToCreate.length === 0) {
-      setBulkStatus("جميع الأقاليم لديها حسابات بالفعل");
-      setBulkCreating(false);
-      return;
-    }
-
-    let created = 0;
-    let failed = 0;
-
-    for (let i = 0; i < provincesToCreate.length; i++) {
-      const province = provincesToCreate[i];
-      const email = `${province.name.replace(/\s+/g, "").replace(/-/g, "")}@entraide.ma`.toLowerCase();
-      const password = "Entraide@2024";
-      
-      setBulkStatus(`جاري إنشاء حساب: ${province.name}`);
-      
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        
-        await setDoc(doc(db, "users", userCredential.user.uid), {
-          uid: userCredential.user.uid,
-          email: email,
-          displayName: province.name,
-          role: "user",
-          province: province.name
-        });
-        
-        created++;
-      } catch (err) {
-        console.error(`Failed to create user for ${province.name}:`, err);
-        failed++;
-      }
-      
-      setBulkProgress(Math.round(((i + 1) / provincesToCreate.length) * 100));
-    }
-
-    setBulkStatus(`تم إنشاء ${created} حساب بنجاح${failed > 0 ? ` (${failed} فشل)` : ""}`);
-    setBulkCreating(false);
-  };
-
   const handleDeleteUser = async (userId: string) => {
     if (confirm("هل أنت متأكد من حذف هذا المستخدم؟")) {
       try {
@@ -179,72 +124,13 @@ export function UserManagement() {
     <Card className="border-border/50">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-lg">إدارة المستخدمين</CardTitle>
-        <div className="flex items-center gap-2">
-          {/* Bulk Create Users Dialog */}
-          <Dialog open={isBulkDialogOpen} onOpenChange={setIsBulkDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" variant="outline" className="border-primary/50 text-primary hover:bg-primary/10">
-                <Users className="h-4 w-4 ml-2" />
-                إنشاء حسابات الأقاليم
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>إنشاء حسابات لجميع الأقاليم</DialogTitle>
-                <DialogDescription>
-                  سيتم إنشاء حساب لكل إقليم لا يملك حساب بعد. كلمة المرور الافتراضية: Entraide@2024
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="text-sm text-muted-foreground text-right">
-                  <p>عدد الأقاليم الإجمالي: {getAllProvinces().length}</p>
-                  <p>الأقاليم التي لديها حسابات: {users.filter(u => u.province).length}</p>
-                  <p>الأقاليم المتبقية: {getAllProvinces().filter(p => !users.some(u => u.province === p.name)).length}</p>
-                </div>
-                
-                {bulkCreating && (
-                  <div className="space-y-2">
-                    <Progress value={bulkProgress} className="h-2" />
-                    <p className="text-xs text-muted-foreground text-center">{bulkProgress}%</p>
-                  </div>
-                )}
-                
-                {bulkStatus && (
-                  <div className={`text-sm p-3 rounded-lg text-right ${
-                    bulkStatus.includes("فشل") 
-                      ? "bg-yellow-500/10 text-yellow-600 border border-yellow-500/20" 
-                      : "bg-green-500/10 text-green-600 border border-green-500/20"
-                  }`}>
-                    {bulkStatus}
-                  </div>
-                )}
-
-                {error && (
-                  <div className="flex items-center gap-2 text-destructive text-sm p-3 bg-destructive/10 border border-destructive/20 rounded-lg">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    <span>{error}</span>
-                  </div>
-                )}
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button type="button" variant="outline" onClick={() => setIsBulkDialogOpen(false)} disabled={bulkCreating}>
-                  إغلاق
-                </Button>
-                <Button onClick={handleBulkCreateUsers} disabled={bulkCreating}>
-                  {bulkCreating ? <Spinner className="h-4 w-4" /> : "بدء الإنشاء"}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Add Single User Dialog */}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary hover:bg-primary/90">
-                <Plus className="h-4 w-4 ml-2" />
-                إضافة مستخدم
-              </Button>
-            </DialogTrigger>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="bg-primary hover:bg-primary/90">
+              <Plus className="h-4 w-4 ml-2" />
+              إضافة مستخدم
+            </Button>
+          </DialogTrigger>
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>إضافة مستخدم جديد</DialogTitle>
@@ -358,8 +244,7 @@ export function UserManagement() {
               </div>
             </form>
           </DialogContent>
-          </Dialog>
-        </div>
+        </Dialog>
       </CardHeader>
       <CardContent>
         <div className="rounded-lg border border-border/50 overflow-hidden">
