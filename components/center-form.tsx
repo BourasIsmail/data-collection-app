@@ -288,10 +288,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 value={formData.buildingCondition}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, buildingCondition: v }))}
                 className="flex flex-wrap gap-6 justify-end"
-                dir="rtl"
               >
                 {BUILDING_CONDITIONS.map((condition) => (
-                  <div key={condition} className="flex items-center gap-2 flex-row-reverse">
+                  <div key={condition} className="flex items-center gap-2">
                     <Label htmlFor={`condition-${condition}`} className="cursor-pointer">
                       {condition}
                     </Label>
@@ -332,10 +331,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 value={formData.legalStatus}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
                 className="flex flex-col gap-3 items-end"
-                dir="rtl"
               >
                 {LEGAL_STATUS_OPTIONS.map((option) => (
-                  <div key={option} className="flex items-center gap-2 flex-row-reverse">
+                  <div key={option} className="flex items-center gap-2">
                     <Label htmlFor={`legal-${option}`} className="cursor-pointer">
                       {option}
                     </Label>
@@ -352,10 +350,9 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 value={formData.centerManagement}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, centerManagement: v }))}
                 className="flex flex-col gap-3 items-end"
-                dir="rtl"
               >
                 {CENTER_MANAGEMENT_OPTIONS.map((option) => (
-                  <div key={option} className="flex items-center gap-2 flex-row-reverse">
+                  <div key={option} className="flex items-center gap-2">
                     <Label htmlFor={`management-${option}`} className="cursor-pointer">
                       {option}
                     </Label>
