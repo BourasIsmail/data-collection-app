@@ -242,7 +242,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             </div>
 
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">العنوان الكامل</label>
+              <label className="block text-sm font-medium">العنوان الكامل <span className="text-destructive">*</span></label>
               <Textarea
                 value={formData.fullAddress}
                 onChange={(e) => setFormData(prev => ({ ...prev, fullAddress: e.target.value }))}
@@ -250,11 +250,12 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 className="text-right"
                 dir="rtl"
                 rows={2}
+                required
               />
             </div>
 
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">المساحة الإجمالية للمركز أو المركب الاجتماعي بمتر مربع</label>
+              <label className="block text-sm font-medium">المساحة الإجمالية للمركز أو المركب الاجتماعي بمتر مربع <span className="text-destructive">*</span></label>
               <Input
                 type="number"
                 value={formData.totalArea}
@@ -262,6 +263,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 placeholder="أدخل المساحة بمتر مربع"
                 className="text-right"
                 dir="rtl"
+                required
               />
             </div>
 
@@ -302,7 +304,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
 
             {/* طبيعة الخدمات والأنشطة - Multi-checkbox */}
             <div className="space-y-3 text-right">
-              <label className="block text-sm font-medium">طبيعة الخدمات والأنشطة</label>
+              <label className="block text-sm font-medium">طبيعة الخدمات والأنشطة <span className="text-destructive">*</span></label>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-4 border rounded-lg bg-muted/20">
                 {SERVICE_TYPES.map((service) => (
                   <div key={service} className="flex items-center gap-2 justify-end">
@@ -328,7 +330,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             <div className="space-y-3 text-right">
               <label className="block text-sm font-medium">الوضعية القانونية للعقار <span className="text-destructive">*</span></label>
               <RadioGroup
-                value={formData.legalStatus}
+                value={formData.legalStatus.startsWith("آخر") ? "آخر" : formData.legalStatus}
                 onValueChange={(v) => setFormData(prev => ({ ...prev, legalStatus: v }))}
                 className="flex flex-col gap-3 items-end"
               >
@@ -341,6 +343,20 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   </div>
                 ))}
               </RadioGroup>
+              {(formData.legalStatus === "آخر" || formData.legalStatus.startsWith("آخر :")) && (
+                <div className="mt-2">
+                  <Input
+                    value={formData.legalStatus.startsWith("آخر :") ? formData.legalStatus.replace("آخر : ", "") : ""}
+                    onChange={(e) => setFormData(prev => ({ 
+                      ...prev, 
+                      legalStatus: e.target.value ? `آخر : ${e.target.value}` : "آخر"
+                    }))}
+                    placeholder="حدد الوضعية القانونية"
+                    className="text-right"
+                    dir="rtl"
+                  />
+                </div>
+              )}
             </div>
 
             {/* تدبير المركز - Radio */}
@@ -368,30 +384,32 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
             <h3 className="text-lg font-semibold border-b pb-2 text-primary text-right">بيانات إضافية</h3>
             
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">الشريك أو الجمعية المتواجدة بالمركز الاجتماعي</label>
+              <label className="block text-sm font-medium">الشريك أو الجمعية المتواجدة بالمركز الاجتماعي <span className="text-destructive">*</span></label>
               <Input
                 value={formData.partnerAssociation}
                 onChange={(e) => setFormData(prev => ({ ...prev, partnerAssociation: e.target.value }))}
                 placeholder="أدخل اسم الشريك أو الجمعية"
                 className="text-right"
                 dir="rtl"
+                required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">الفئات المستفيدة</label>
+                <label className="block text-sm font-medium">الفئات المستفيدة <span className="text-destructive">*</span></label>
                 <Input
                   value={formData.beneficiaryCategories}
                   onChange={(e) => setFormData(prev => ({ ...prev, beneficiaryCategories: e.target.value }))}
                   placeholder="أدخل الفئات المستفيدة"
                   className="text-right"
                   dir="rtl"
+                  required
                 />
               </div>
 
               <div className="space-y-2 text-right">
-                <label className="block text-sm font-medium">معدل عدد المستفيدين شهريًا</label>
+                <label className="block text-sm font-medium">معدل عدد المستفيدين شهريًا <span className="text-destructive">*</span></label>
                 <Input
                   type="number"
                   value={formData.monthlyBeneficiaries}
@@ -399,12 +417,13 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                   placeholder="أدخل العدد التقريبي"
                   className="text-right"
                   dir="rtl"
+                  required
                 />
               </div>
             </div>
 
             <div className="space-y-2 text-right">
-              <label className="block text-sm font-medium">ملاحظات</label>
+              <label className="block text-sm font-medium">ملاحظات <span className="text-destructive">*</span></label>
               <Textarea
                 value={formData.observations}
                 onChange={(e) => setFormData(prev => ({ ...prev, observations: e.target.value }))}
@@ -412,6 +431,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 className="text-right"
                 dir="rtl"
                 rows={4}
+                required
               />
             </div>
           </div>

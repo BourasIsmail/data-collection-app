@@ -5,7 +5,7 @@ import { collection, query, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Center } from "@/types/center";
 import { Card, CardContent } from "@/components/ui/card";
-import { Building2, MapPin, CheckCircle, AlertTriangle } from "lucide-react";
+import { Building2, Users, Handshake, HomeIcon } from "lucide-react";
 
 export function StatsCards() {
   const [centers, setCenters] = useState<Center[]>([]);
@@ -29,44 +29,44 @@ export function StatsCards() {
   }, []);
 
   const totalCenters = centers.length;
-  const uniqueProvinces = new Set(centers.map(c => c.province)).size;
-  const operationalCenters = centers.filter(c => c.currentStatus === "مستغل").length;
-  const needsRehabilitation = centers.filter(c => 
-    c.currentStatus === "يحتاج تأهيل" || c.generalCondition === "متدهورة"
-  ).length;
+  
+  // Count centers by management type
+  const directManagement = centers.filter(c => c.centerManagement === "تدبير مباشر من التعاون الوطني").length;
+  const delegatedManagement = centers.filter(c => c.centerManagement === "تدبير مفوض لجمعية").length;
+  const sharedManagement = centers.filter(c => c.centerManagement === "تدبير مشترك مع الجمعية").length;
 
   const stats = [
     {
-      title: "إجمالي البنايات",
+      title: "إجمالي المراكز",
       value: loading ? "-" : totalCenters,
       icon: Building2,
-      description: "بناية مسجلة",
+      description: "مركز مسجل في المنصة",
       color: "text-primary",
       bgColor: "bg-primary/10"
     },
     {
-      title: "الأقاليم المغطاة",
-      value: loading ? "-" : uniqueProvinces,
-      icon: MapPin,
-      description: "إقليم",
+      title: "تدبير مباشر",
+      value: loading ? "-" : directManagement,
+      icon: HomeIcon,
+      description: "من طرف التعاون الوطني",
       color: "text-blue-400",
       bgColor: "bg-blue-500/10"
     },
     {
-      title: "البنايات المستغلة",
-      value: loading ? "-" : operationalCenters,
-      icon: CheckCircle,
-      description: `من ${totalCenters} بناية`,
+      title: "تدبير مفوض",
+      value: loading ? "-" : delegatedManagement,
+      icon: Handshake,
+      description: "لجمعيات المجتمع المدني",
       color: "text-green-400",
       bgColor: "bg-green-500/10"
     },
     {
-      title: "تحتاج تأهيل",
-      value: loading ? "-" : needsRehabilitation,
-      icon: AlertTriangle,
-      description: "بناية",
-      color: "text-yellow-400",
-      bgColor: "bg-yellow-500/10"
+      title: "تدبير مشترك",
+      value: loading ? "-" : sharedManagement,
+      icon: Users,
+      description: "بشراكة مع الجمعيات",
+      color: "text-amber-400",
+      bgColor: "bg-amber-500/10"
     }
   ];
 
