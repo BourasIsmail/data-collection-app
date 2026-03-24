@@ -41,7 +41,8 @@ export const SERVICE_TYPES = [
   "مركز التربية والتكوين",
   "حضانة رياض الأطفال",
   "دار طالب",
-  "دار الطالبة"
+  "دار الطالبة",
+  "مركبة اجتماعية"
 ] as const;
 
 // Building condition options
