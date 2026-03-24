@@ -222,7 +222,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
               <div className="space-y-2 text-right">
                 <label className="block text-sm font-medium">الجماعة الترابية <span className="text-destructive">*</span></label>
                 <Select 
-                  value={formData.territorialCommunity} 
+                  value={formData.territorialCommunity.startsWith("آخر :") ? "آخر مع التحديد" : formData.territorialCommunity} 
                   onValueChange={(v) => setFormData(prev => ({ ...prev, territorialCommunity: v }))}
                   disabled={!formData.province}
                   required
@@ -236,8 +236,24 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                         {commune}
                       </SelectItem>
                     ))}
+                    <SelectItem value="آخر مع التحديد">آخر مع التحديد</SelectItem>
                   </SelectContent>
                 </Select>
+                {(formData.territorialCommunity === "آخر مع التحديد" || formData.territorialCommunity.startsWith("آخر :")) && (
+                  <div className="mt-2">
+                    <Input
+                      value={formData.territorialCommunity.startsWith("آخر :") ? formData.territorialCommunity.replace("آخر : ", "") : ""}
+                      onChange={(e) => setFormData(prev => ({ 
+                        ...prev, 
+                        territorialCommunity: e.target.value ? `آخر : ${e.target.value}` : "آخر مع التحديد"
+                      }))}
+                      placeholder="حدد الجماعة الترابية"
+                      className="text-right"
+                      dir="rtl"
+                      required
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
@@ -401,7 +417,7 @@ export function CenterForm({ onSuccess, editCenter }: CenterFormProps) {
                 <Input
                   value={formData.beneficiaryCategories}
                   onChange={(e) => setFormData(prev => ({ ...prev, beneficiaryCategories: e.target.value }))}
-                  placeholder="أدخل الفئات المستفيدة"
+                  placeholder="أدخل ال��ئات المستفيدة"
                   className="text-right"
                   dir="rtl"
                   required
