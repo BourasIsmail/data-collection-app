@@ -1,8 +1,32 @@
 import { Center } from "@/types/center";
+import { getRegionByProvince, regions } from "@/lib/morocco-data";
 
-// Convert centers data to CSV format
+// Sort centers by region order
+function sortCentersByRegion(centers: Center[]): Center[] {
+  const regionOrder = regions.map(r => r.name);
+
+  return [...centers].sort((a, b) => {
+    const regionA = getRegionByProvince(a.province) || "";
+    const regionB = getRegionByProvince(b.province) || "";
+
+    const indexA = regionOrder.indexOf(regionA);
+    const indexB = regionOrder.indexOf(regionB);
+
+    // If same region, sort by province name
+    if (indexA === indexB) {
+      return (a.province || "").localeCompare(b.province || "", "ar");
+    }
+
+    return indexA - indexB;
+  });
+}
+
+// Converts centers data to CSV format
 export function exportToCSV(centers: Center[], filename: string = "centers-data") {
+  const sortedCenters = sortCentersByRegion(centers);
+
   const headers = [
+    "الجهة",
     "اسم المركز",
     "الإقليم أو العمالة",
     "الجماعة الترابية",
@@ -18,7 +42,8 @@ export function exportToCSV(centers: Center[], filename: string = "centers-data"
     "ملاحظات"
   ];
 
-  const rows = centers.map(center => [
+  const rows = sortedCenters.map(center => [
+    getRegionByProvince(center.province) || "",
     center.centerName || "",
     center.province || "",
     center.territorialCommunity || "",
@@ -44,7 +69,7 @@ export function exportToCSV(centers: Center[], filename: string = "centers-data"
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
-  
+
   link.setAttribute("href", url);
   link.setAttribute("download", `${filename}.csv`);
   link.style.visibility = "hidden";
@@ -54,9 +79,12 @@ export function exportToCSV(centers: Center[], filename: string = "centers-data"
   URL.revokeObjectURL(url);
 }
 
-// Convert centers data to Excel format (semicolon-separated CSV)
+// Convert centers data to Excel XLSX format
 export function exportToExcel(centers: Center[], filename: string = "centers-data") {
+  const sortedCenters = sortCentersByRegion(centers);
+
   const headers = [
+    "الجهة",
     "اسم المركز",
     "الإقليم أو العمالة",
     "الجماعة الترابية",
@@ -72,7 +100,8 @@ export function exportToExcel(centers: Center[], filename: string = "centers-dat
     "ملاحظات"
   ];
 
-  const rows = centers.map(center => [
+  const rows = sortedCenters.map(center => [
+    getRegionByProvince(center.province) || "",
     center.centerName || "",
     center.province || "",
     center.territorialCommunity || "",
@@ -88,28 +117,75 @@ export function exportToExcel(centers: Center[], filename: string = "centers-dat
     center.observations || ""
   ]);
 
-  // Escape and quote cells for proper CSV handling
-  const escapeCell = (cell: string) => {
-    const str = String(cell);
-    if (str.includes(';') || str.includes('\n') || str.includes('"')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
+  // Escape XML special characters
+  const escapeXml = (str: string) => {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
   };
 
-  // Use BOM for UTF-8 and semicolon as delimiter
-  const BOM = "\uFEFF";
-  const csvContent = BOM + [
-    headers.map(escapeCell).join(';'),
-    ...rows.map(row => row.map(escapeCell).join(';'))
-  ].join('\r\n');
+  // Create Excel XML Spreadsheet format (compatible with .xlsx when opened)
+  const xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+  xmlns:o="urn:schemas-microsoft-com:office:office"
+  xmlns:x="urn:schemas-microsoft-com:office:excel"
+  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <DocumentProperties xmlns="urn:schemas-microsoft-com:office:office">
+    <Title>بيانات المراكز الاجتماعية</Title>
+    <Author>منصة جرد المراكز</Author>
+  </DocumentProperties>
+  <Styles>
+    <Style ss:ID="Header">
+      <Font ss:Bold="1" ss:Size="12"/>
+      <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+      <Interior ss:Color="#4472C4" ss:Pattern="Solid"/>
+      <Font ss:Color="#FFFFFF" ss:Bold="1"/>
+    </Style>
+    <Style ss:ID="Data">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center" ss:WrapText="1"/>
+    </Style>
+    <Style ss:ID="RegionGroup">
+      <Font ss:Bold="1"/>
+      <Interior ss:Color="#D9E2F3" ss:Pattern="Solid"/>
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+    </Style>
+  </Styles>
+  <Worksheet ss:Name="المراكز الاجتماعية" ss:RightToLeft="1">
+    <Table ss:DefaultColumnWidth="120" ss:DefaultRowHeight="20">
+      <Column ss:Width="150"/>
+      <Column ss:Width="180"/>
+      <Column ss:Width="120"/>
+      <Column ss:Width="120"/>
+      <Column ss:Width="200"/>
+      <Column ss:Width="80"/>
+      <Column ss:Width="80"/>
+      <Column ss:Width="200"/>
+      <Column ss:Width="150"/>
+      <Column ss:Width="150"/>
+      <Column ss:Width="150"/>
+      <Column ss:Width="120"/>
+      <Column ss:Width="80"/>
+      <Column ss:Width="200"/>
+      <Row ss:Height="30">
+        ${headers.map(h => `<Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('\n        ')}
+      </Row>
+      ${rows.map(row => `<Row>
+        ${row.map((cell, idx) => `<Cell ss:StyleID="${idx === 0 ? 'RegionGroup' : 'Data'}"><Data ss:Type="String">${escapeXml(cell)}</Data></Cell>`).join('\n        ')}
+      </Row>`).join('\n      ')}
+    </Table>
+  </Worksheet>
+</Workbook>`;
 
-  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const blob = new Blob([xmlContent], { type: "application/vnd.ms-excel;charset=utf-8;" });
   const link = document.createElement("a");
   const url = URL.createObjectURL(blob);
-  
+
   link.setAttribute("href", url);
-  link.setAttribute("download", `${filename}.csv`);
+  link.setAttribute("download", `${filename}.xlsx`);
   link.style.visibility = "hidden";
   document.body.appendChild(link);
   link.click();
